@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Settings &amp; Updates</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .settings-layout { display:grid; grid-template-columns:180px 1fr; gap:22px; }
+  @media (max-width:760px){ .settings-layout{grid-template-columns:1fr} }
+  .stabs { display:flex; flex-direction:column; gap:2px; position:sticky; top:78px; align-self:start; }
+  .stab { padding:9px 12px; border-radius:var(--r-sm); font-size:13px; color:var(--fg-2); cursor:pointer; font-weight:500; }
+  .stab:hover { background:rgba(255,255,255,0.04); color:var(--fg); }
+  .stab.on { background:var(--surface-2); color:var(--fg); }
+  .opt { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--hairline); }
+  .opt:last-child{border-bottom:0;}
+  .opt .on-t { font-size:13.5px; font-weight:550; } .opt .on-s { font-size:12px; color:var(--muted); margin-top:2px; }
+  .toggle { margin-left:auto; width:42px;height:24px;border-radius:14px;background:var(--accent);position:relative;cursor:pointer;transition:background .15s;flex:none;border:0; }
+  .toggle::after { content:"";position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#06140d;transition:left .15s; }
+  .toggle.off { background:rgba(255,255,255,0.12); } .toggle.off::after { left:3px;background:var(--faint); }
+  select.sel-input { background:var(--bg-2); border:1px solid var(--border-2); color:var(--fg); border-radius:var(--r-sm);
+    padding:7px 11px; font-size:13px; font-family:inherit; margin-left:auto; }
+  .update-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:18px; }
+  .upd-row { display:flex; align-items:center; gap:14px; }
+  .upd-row .ico { width:44px;height:44px;border-radius:11px;background:var(--accent-wash);border:1px solid var(--accent-dim);display:grid;place-items:center;flex:none; }
+  .upd-row .ico svg { width:22px;height:22px;color:var(--accent); }
+  .secure-list { list-style:none; display:flex; flex-direction:column; gap:9px; margin-top:14px; }
+  .secure-list li { display:flex; gap:9px; font-size:12.5px; color:var(--fg-2); align-items:center; }
+  .secure-list li svg { width:15px;height:15px;color:var(--accent);flex:none; }
+  .excl-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--hairline); }
+  .excl-row:last-child{border-bottom:0;} .excl-row .fp { font-family:var(--font-mono); font-size:12px; color:var(--fg-2); }
+  .panel { display:none; } .panel.on { display:block; animation:rise .3s ease both; }
+</style>
+</head>
+<body data-shell data-active="settings" data-title="Settings &amp; updates" data-crumb="Aegis / settings">
+
+  <div class="settings-layout rise">
+    <nav class="stabs">
+      <div class="stab on" data-tab="protection">Protection</div>
+      <div class="stab" data-tab="scanning">Scanning</div>
+      <div class="stab" data-tab="updates">Updates</div>
+      <div class="stab" data-tab="exclusions">Exclusions</div>
+      <div class="stab" data-tab="security">Security</div>
+    </nav>
+
+    <div>
+      <!-- PROTECTION -->
+      <div class="panel on" data-panel="protection">
+        <div class="card pad-lg">
+          <div class="card-h"><h3>Protection engines</h3><span class="ch-sub">enable detection layers</span></div>
+          <div class="opt"><div><div class="on-t">Signature detection</div><div class="on-s">SHA-256/MD5 + rules · fastest, zero false-positives</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Heuristic detection</div><div class="on-s">Suspicious APIs, packers, script &amp; PowerShell abuse</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Behavioral detection</div><div class="on-s">Runtime monitoring &amp; ransomware behaviour</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">ML risk scoring</div><div class="on-s">PE features + entropy for unknown files · may raise false-positives</div></div><button class="toggle"></button></div>
+        </div>
+        <div class="card pad-lg mt-16">
+          <div class="card-h"><h3>Sensitivity</h3></div>
+          <div class="opt"><div><div class="on-t">Detection threshold</div><div class="on-s">Higher = catches more, more false positives</div></div>
+            <select class="sel-input"><option>Balanced (recommended)</option><option>Aggressive</option><option>Cautious</option></select></div>
+          <div class="opt"><div><div class="on-t">Auto-quarantine malicious</div><div class="on-s">Isolate high-confidence threats without prompting</div></div><button class="toggle"></button></div>
+        </div>
+      </div>
+
+      <!-- SCANNING -->
+      <div class="panel" data-panel="scanning">
+        <div class="card pad-lg">
+          <div class="card-h"><h3>Scan behaviour</h3></div>
+          <div class="opt"><div><div class="on-t">Scan inside archives</div><div class="on-s">ZIP, RAR, 7z, TAR, GZIP — recursive</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Scan hidden &amp; system files</div><div class="on-s">Include protected OS directories</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Incremental scanning</div><div class="on-s">Skip unchanged files using the cache</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Worker threads</div><div class="on-s">More threads = faster, higher CPU</div></div>
+            <select class="sel-input"><option>Auto (8)</option><option>4</option><option>16</option></select></div>
+          <div class="opt"><div><div class="on-t">Max archive depth</div><div class="on-s">Guards against zip bombs</div></div>
+            <select class="sel-input"><option>5 levels</option><option>3 levels</option><option>10 levels</option></select></div>
+        </div>
+        <div class="card pad-lg mt-16">
+          <div class="card-h"><h3>Scheduled scans</h3></div>
+          <div class="opt"><div><div class="on-t">Daily quick scan</div><div class="on-s">02:00 · memory + persistence</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Weekly full scan</div><div class="on-s">Sunday 03:00 · all drives</div></div><button class="toggle"></button></div>
+        </div>
+      </div>
+
+      <!-- UPDATES -->
+      <div class="panel" data-panel="updates">
+        <div class="update-card">
+          <div class="upd-row">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></div>
+            <div style="flex:1"><div style="font-weight:600;font-size:14px">Signatures up to date</div>
+              <div class="muted" style="font-size:12.5px">v2024.06.22.02 · 1,420,338 signatures · checked 2h ago</div></div>
+            <button class="btn primary" id="checkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/></svg>Check now</button>
+          </div>
+          <div class="bar-track mt-16" id="updTrack" style="display:none"><div class="bar-fill" id="updBar" style="width:0%"></div></div>
+          <div id="updStatus" class="muted mt-8" style="font-size:12px;display:none"></div>
+          <ul class="secure-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/></svg>Delta updates downloaded over TLS 1.3</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/></svg>Verified against a pinned signing key before install</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/></svg>Atomic swap with automatic rollback on failure</li>
+          </ul>
+        </div>
+        <div class="card pad-lg mt-16">
+          <div class="card-h"><h3>Update channel</h3></div>
+          <div class="opt"><div><div class="on-t">Automatic updates</div><div class="on-s">Check every 2 hours</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Release channel</div><div class="on-s">Stable signature feed</div></div>
+            <select class="sel-input"><option>Stable</option><option>Beta (faster, riskier)</option></select></div>
+        </div>
+      </div>
+
+      <!-- EXCLUSIONS -->
+      <div class="panel" data-panel="exclusions">
+        <div class="card pad-lg">
+          <div class="card-h"><h3>Excluded paths &amp; files</h3><span class="ch-sub">never scanned — use with care</span>
+            <div class="ch-right"><button class="btn ghost sm">+ Add exclusion</button></div></div>
+          <div class="excl-row"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.7" style="width:15px;height:15px"><path d="M3 7h7l2 2h9v10H3z"/></svg><span class="fp">C:\\Dev\\node_modules</span><button class="icon-btn" style="margin-left:auto;width:28px;height:28px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
+          <div class="excl-row"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.7" style="width:15px;height:15px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span class="fp">*.iso</span><button class="icon-btn" style="margin-left:auto;width:28px;height:28px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
+          <div class="excl-row"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.7" style="width:15px;height:15px"><path d="M3 7h7l2 2h9v10H3z"/></svg><span class="fp">D:\\VMs</span><button class="icon-btn" style="margin-left:auto;width:28px;height:28px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
+        </div>
+      </div>
+
+      <!-- SECURITY -->
+      <div class="panel" data-panel="security">
+        <div class="card pad-lg">
+          <div class="card-h"><h3>Tamper protection</h3></div>
+          <div class="opt"><div><div class="on-t">Protect Aegis files &amp; service</div><div class="on-s">Block other apps from disabling or deleting Aegis</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Require password to change settings</div><div class="on-s">Prevents malware from weakening protection</div></div><button class="toggle off"></button></div>
+          <div class="opt"><div><div class="on-t">Reject unsigned IPC clients</div><div class="on-s">Only the signed Aegis UI may talk to the engine</div></div><button class="toggle"></button></div>
+        </div>
+        <div class="card pad-lg mt-16">
+          <div class="card-h"><h3>Privacy</h3></div>
+          <div class="opt"><div><div class="on-t">Local-only mode</div><div class="on-s">No cloud lookups; all analysis on-device</div></div><button class="toggle"></button></div>
+          <div class="opt"><div><div class="on-t">Share anonymous detection stats</div><div class="on-s">Help improve the open-source signature feed</div></div><button class="toggle off"></button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="js/shell.js"></script>
+<script>
+  // tabs
+  document.querySelectorAll('.stab').forEach(function(t){
+    t.addEventListener('click',function(){
+      document.querySelectorAll('.stab').forEach(function(x){x.classList.remove('on');});
+      document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+      t.classList.add('on');
+      document.querySelector('[data-panel="'+t.dataset.tab+'"]').classList.add('on');
+    });
+  });
+  // toggles
+  document.addEventListener('click', function(e){ var t=e.target.closest('.toggle'); if(t) t.classList.toggle('off'); });
+  // secure update flow simulation
+  document.getElementById('checkBtn').addEventListener('click', function(){
+    var track=document.getElementById('updTrack'), bar=document.getElementById('updBar'),
+        st=document.getElementById('updStatus'), btn=this;
+    track.style.display='block'; st.style.display='block'; btn.disabled=true;
+    var steps=[[20,'Connecting over TLS 1.3…'],[45,'Downloading delta (2,104 signatures)…'],
+      [70,'Verifying signature against pinned key…'],[90,'Applying atomic swap…'],[100,'Up to date · rollback point saved ✓']];
+    var i=0; var iv=setInterval(function(){
+      bar.style.width=steps[i][0]+'%'; st.textContent=steps[i][1];
+      if(steps[i][0]===100){ bar.style.background='var(--accent)'; st.style.color='var(--accent)'; clearInterval(iv); btn.disabled=false; }
+      i++;
+    }, 650);
+  });
+</script>
+</body>
+</html>

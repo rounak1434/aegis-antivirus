@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Deep Scan</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .scan-hero { display:grid; grid-template-columns: 260px 1fr; gap:20px; align-items:center; }
+  @media (max-width:860px){ .scan-hero{grid-template-columns:1fr} }
+  .scan-ring { position:relative; width:200px; height:200px; margin:0 auto; }
+  .scan-ring svg { transform: rotate(-90deg); }
+  .scan-ring .c { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .scan-ring .pct { font-family:var(--font-mono); font-size:40px; font-weight:600; letter-spacing:-0.03em; }
+  .scan-ring .pl { font-size:11px; color:var(--muted); letter-spacing:.06em; }
+  .scan-meta h2 { font-size:20px; } .scan-meta .sub { color:var(--muted); font-size:13px; margin-top:3px; }
+  .cur-path { font-family:var(--font-mono); font-size:12px; color:var(--fg-2); margin-top:16px;
+    background:var(--bg-2); border:1px solid var(--border); border-radius:var(--r-sm); padding:9px 12px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cur-path .tag { color:var(--accent); }
+  .engines { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:14px; }
+  @media (max-width:600px){ .engines{grid-template-columns:1fr} }
+  .eng { display:flex; align-items:center; gap:9px; font-size:12px; padding:7px 10px; border-radius:var(--r-sm);
+    background:var(--bg-2); border:1px solid var(--hairline); }
+  .eng .pulse { width:7px;height:7px;border-radius:50%;background:var(--accent); box-shadow:0 0 0 0 var(--accent); animation:p 1.4s infinite; }
+  @keyframes p { 0%{box-shadow:0 0 0 0 rgba(54,211,153,.5)} 70%{box-shadow:0 0 0 7px rgba(54,211,153,0)} 100%{box-shadow:0 0 0 0 rgba(54,211,153,0)} }
+  .eng .en { font-weight:550; } .eng .ec { margin-left:auto; font-family:var(--font-mono); color:var(--muted); font-size:11px; }
+  .eng.idle .pulse { background:var(--faint); animation:none; }
+  .feed { max-height:300px; overflow:auto; }
+  .feed-row { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+    padding:10px 4px; border-bottom:1px solid var(--hairline); font-size:12.5px; }
+  .feed-row:last-child{border-bottom:0;}
+  .feed-row .fp { font-family:var(--font-mono); color:var(--fg-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+</head>
+<body data-shell data-active="scan" data-title="Deep scan in progress" data-crumb="Aegis / scan">
+
+  <div class="card pad-lg rise mb-16">
+    <div class="scan-hero">
+      <div class="scan-ring">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="13"/>
+          <circle id="ring" cx="100" cy="100" r="86" fill="none" stroke="var(--accent)" stroke-width="13"
+            stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="540"/>
+        </svg>
+        <div class="c"><div class="pct"><span id="pct">0</span>%</div><div class="pl">scanning</div></div>
+      </div>
+      <div class="scan-meta">
+        <div class="flex between items-center">
+          <div><h2>Deep scan</h2><div class="sub">All drives · archives · memory · all detection layers</div></div>
+          <div class="flex gap-8">
+            <button class="btn ghost sm" id="pauseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>Pause</button>
+            <button class="btn danger sm" onclick="location.href='threats.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>Stop</button>
+          </div>
+        </div>
+        <div class="cur-path"><span class="tag">scanning ›</span> <span id="curPath">C:\Windows\System32\drivers\…</span></div>
+        <div class="engines">
+          <div class="eng" data-eng="walk"><span class="pulse"></span><span class="en">File walker</span><span class="ec" id="e-walk">—</span></div>
+          <div class="eng" data-eng="sig"><span class="pulse"></span><span class="en">Signature match</span><span class="ec" id="e-sig">—</span></div>
+          <div class="eng" data-eng="heur"><span class="pulse"></span><span class="en">Heuristic + PE</span><span class="ec" id="e-heur">—</span></div>
+          <div class="eng idle" data-eng="arch"><span class="pulse"></span><span class="en">Archive extract</span><span class="ec" id="e-arch">queued</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g-4 mb-16 rise-2">
+    <div class="card stat"><div class="s-label">Scanned</div><div class="s-val"><span id="m-scanned">0</span></div><div class="s-delta">of ~241,000 est.</div></div>
+    <div class="card stat"><div class="s-label">Throughput</div><div class="s-val" style="font-size:22px"><span id="m-tput">0</span><span class="u">f/s</span></div><div class="s-delta">8 worker threads</div></div>
+    <div class="card stat"><div class="s-label">Detections</div><div class="s-val text-danger"><span id="m-det">0</span></div><div class="s-delta">live as found</div></div>
+    <div class="card stat"><div class="s-label">Elapsed</div><div class="s-val mono" style="font-size:22px"><span id="m-time">00:00</span></div><div class="s-delta"><span id="m-eta">est. —</span></div></div>
+  </div>
+
+  <div class="card pad-lg rise-3">
+    <div class="card-h"><h3>Live detections</h3><span class="ch-sub">streamed from the verdict aggregator</span>
+      <span class="ch-right"><span class="pill danger" id="detPill"><span class="dot"></span><span id="detCount">0</span> found</span></span></div>
+    <div class="feed" id="feed">
+      <div class="feed-row" style="color:var(--muted)"><span></span><span class="fp">No detections yet — scanning clean files…</span><span></span></div>
+    </div>
+  </div>
+
+<script src="js/shell.js"></script>
+<script>
+(function(){
+  var paths = [
+    'C:\\Windows\\System32\\drivers\\','C:\\Program Files\\','C:\\Users\\admin\\AppData\\Local\\Temp\\',
+    'C:\\Users\\admin\\Downloads\\','C:\\ProgramData\\','C:\\Windows\\SysWOW64\\','D:\\Backups\\archive.zip › ',
+    'C:\\Users\\admin\\Documents\\','C:\\Windows\\Tasks\\'
+  ];
+  var files = ['ntoskrnl.exe','svchost.dll','setup.tmp','invoice_2024.exe','update.ps1','config.dat',
+    'report.pdf','driver32.sys','cache.bin','launcher.scr','readme.txt','7za.dll'];
+  var dets = [
+    {p:'C:\\Users\\admin\\Downloads\\invoice_2024.exe', n:'Trojan:Win32/Wacatac.B!ml', r:'ML score 0.96 · packed PE', sev:92},
+    {p:'C:\\Users\\admin\\AppData\\Local\\Temp\\update.ps1', n:'Heuristic:PowerShell/Obfus', r:'base64 + IEX download cradle', sev:74},
+    {p:'D:\\Backups\\archive.zip › setup.scr', n:'Trojan:Win32/Masquerade', r:'double extension · icon spoof', sev:81}
+  ];
+  function pad(n){return (n<10?'0':'')+n;}
+  function fmt(n){return n.toLocaleString('en-US');}
+
+  var total=241000, scanned=0, pct=0, detsShown=0, start=Date.now(), paused=false;
+  var ring=document.getElementById('ring'), CIRC=540;
+  var feed=document.getElementById('feed'), feedCleared=false;
+
+  function setEng(id,v){var e=document.getElementById('e-'+id); if(e)e.textContent=v;}
+
+  var tick = setInterval(function(){
+    if(paused) return;
+    var inc = Math.floor(900 + Math.random()*1600);
+    scanned = Math.min(total, scanned+inc);
+    pct = Math.min(100, scanned/total*100);
+    document.getElementById('pct').textContent = Math.floor(pct);
+    ring.style.strokeDashoffset = CIRC*(1-pct/100);
+    document.getElementById('m-scanned').textContent = fmt(scanned);
+    document.getElementById('m-tput').textContent = fmt(inc*2);
+    var el=(Date.now()-start)/1000;
+    document.getElementById('m-time').textContent = pad(Math.floor(el/60))+':'+pad(Math.floor(el%60));
+    var eta = pct>2 ? el/(pct/100)-el : 0;
+    document.getElementById('m-eta').textContent = pct<100? 'est. '+pad(Math.floor(eta/60))+':'+pad(Math.floor(eta%60))+' left':'done';
+    setEng('walk', fmt(scanned));
+    setEng('sig', fmt(Math.floor(scanned*0.62)));
+    setEng('heur', fmt(Math.floor(scanned*0.21)));
+    // current path
+    var pp = paths[Math.floor(Math.random()*paths.length)] + files[Math.floor(Math.random()*files.length)];
+    document.getElementById('curPath').textContent = pp;
+    if(pp.indexOf('.zip')>-1){ document.querySelector('[data-eng="arch"]').classList.remove('idle'); setEng('arch', fmt(Math.floor(scanned*0.04))); }
+    // reveal detections at thresholds
+    if(detsShown < dets.length && pct > (detsShown+1)*24){
+      addDet(dets[detsShown]); detsShown++;
+    }
+    if(pct>=100){ clearInterval(tick); finish(); }
+  }, 380);
+
+  function addDet(d){
+    if(!feedCleared){ feed.innerHTML=''; feedCleared=true; }
+    var sevColor = d.sev>=85?'var(--danger)':d.sev>=60?'var(--warn)':'var(--info)';
+    var row=document.createElement('div'); row.className='feed-row rise';
+    row.innerHTML='<span class="pill danger" style="font-size:10px"><span class="dot"></span>'+d.n.split(':')[0]+'</span>'+
+      '<span class="col"><span class="fp">'+d.p+'</span>'+
+      '<span class="sub" style="font-size:11px;color:var(--muted)">'+d.n+' · '+d.r+'</span></span>'+
+      '<span class="sev"><span class="bar"><i style="width:'+d.sev+'%;background:'+sevColor+'"></i></span>'+d.sev+'</span>';
+    feed.insertBefore(row, feed.firstChild);
+    detsShown; var c=detsShown+1;
+    document.getElementById('m-det').textContent=c;
+    document.getElementById('detCount').textContent=c;
+  }
+  function finish(){
+    document.querySelector('.scan-meta h2').textContent='Deep scan complete';
+    document.querySelector('.pl').textContent='complete';
+    document.querySelectorAll('.eng .pulse').forEach(function(p){p.style.animation='none'; p.style.background='var(--accent)';});
+    document.getElementById('curPath').innerHTML='<span class="tag" style="color:var(--accent)">✓ done ›</span> 241,000 files scanned · '+detsShown+' threats found';
+    var btn=document.getElementById('pauseBtn'); btn.outerHTML='<button class="btn primary sm" onclick="location.href=\'threats.html\'">View report →</button>';
+  }
+  document.getElementById('pauseBtn').addEventListener('click', function(){
+    paused=!paused; this.innerHTML = paused
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l14 8-14 8z"/></svg>Resume'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>Pause';
+    document.querySelector('.pl').textContent = paused?'paused':'scanning';
+  });
+})();
+</script>
+</body>
+</html>

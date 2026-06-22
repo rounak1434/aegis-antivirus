@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Dashboard</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .hero { display:grid; grid-template-columns: 300px 1fr; gap:18px; }
+  @media (max-width:900px){ .hero{grid-template-columns:1fr} }
+  .posture { background:
+      radial-gradient(220px 180px at 50% 20%, var(--accent-wash), transparent 70%), var(--surface);
+    border:1px solid var(--accent-dim); border-radius:var(--r-lg); padding:24px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring { position:relative; width:150px; height:150px; margin:4px 0 14px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .center { position:absolute; inset:0; display:grid; place-items:center; }
+  .ring .center svg { transform:none; width:46px; height:46px; color:var(--accent); }
+  .posture h2 { font-size:19px; } .posture .ps { color:var(--muted); font-size:12.5px; margin-top:3px; }
+  .qa { display:flex; flex-direction:column; gap:10px; }
+  .scan-launch { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; }
+  .modes { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:14px; }
+  @media (max-width:720px){ .modes{grid-template-columns:repeat(2,1fr)} }
+  .mode { text-align:left; background:var(--bg-2); border:1px solid var(--border); border-radius:var(--r);
+    padding:13px; cursor:pointer; transition:border-color .12s, background .12s; color:inherit; }
+  .mode:hover { border-color:var(--border-2); background:var(--surface-2); }
+  .mode.sel { border-color:var(--accent); background:var(--accent-wash); }
+  .mode svg { width:18px; height:18px; color:var(--accent); }
+  .mode .mn { font-size:13px; font-weight:600; margin-top:8px; }
+  .mode .mm { font-size:11px; color:var(--muted); margin-top:3px; }
+  .surface-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--hairline); }
+  .surface-row:last-child { border-bottom:0; }
+  .surface-row .si { width:32px;height:32px;border-radius:8px;background:var(--bg-2);border:1px solid var(--border);
+    display:grid;place-items:center; flex:none; }
+  .surface-row .si svg { width:16px;height:16px;color:var(--muted); }
+  .surface-row .sn { font-size:13px; font-weight:550; }
+  .surface-row .sd { font-size:11.5px; color:var(--muted); }
+  .surface-row .sv { margin-left:auto; text-align:right; }
+  .act-item { display:flex; gap:11px; padding:10px 0; border-bottom:1px solid var(--hairline); align-items:flex-start; }
+  .act-item:last-child{border-bottom:0;}
+  .act-item .ad { width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none; }
+  .act-item .at { font-size:12.5px; } .act-item .as { font-size:11px;color:var(--muted); }
+  .act-item time { margin-left:auto; font-family:var(--font-mono); font-size:10.5px; color:var(--faint); white-space:nowrap; }
+</style>
+</head>
+<body data-shell data-active="dashboard" data-title="Dashboard" data-crumb="Aegis / overview">
+
+  <div class="hero rise mb-16">
+    <div class="posture">
+      <div class="ring">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="64" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="11"/>
+          <circle cx="75" cy="75" r="64" fill="none" stroke="var(--accent)" stroke-width="11"
+            stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="36"/>
+        </svg>
+        <div class="center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      </div>
+      <h2>You're protected</h2>
+      <p class="ps">All shields active · 1 item needs review</p>
+      <div class="flex gap-8 mt-16"><span class="pill ok"><span class="dot"></span>Real-time on</span><span class="pill info">Defs current</span></div>
+    </div>
+
+    <div class="scan-launch">
+      <div class="card-h"><h3>Run a scan</h3><span class="ch-sub">Deep scan selected · last full scan 2 days ago</span>
+        <div class="ch-right"><button class="btn primary" onclick="location.href='scan.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Start scan</button></div>
+      </div>
+      <div class="modes">
+        <button class="mode" data-mode>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+          <div class="mn">Quick</div><div class="mm">Memory + startup + hot paths · ~3 min</div></button>
+        <button class="mode" data-mode>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <div class="mn">Full</div><div class="mm">All drives &amp; persistence · ~40 min</div></button>
+        <button class="mode sel" data-mode>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>
+          <div class="mn">Deep</div><div class="mm">+ archives, memory, all layers · ~1.5 h</div></button>
+        <button class="mode" data-mode>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
+          <div class="mn">Custom</div><div class="mm">Pick paths, engines &amp; depth</div></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g-4 mb-16 rise-2">
+    <div class="card stat"><div class="s-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h18M3 12h18M3 17h12"/></svg>Files scanned (24h)</div><div class="s-val">128,440</div><div class="s-delta up">incremental cache hit 71%</div></div>
+    <div class="card stat"><div class="s-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>Threats blocked (24h)</div><div class="s-val text-danger">2</div><div class="s-delta">last block 4h ago</div></div>
+    <div class="card stat"><div class="s-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8"/></svg>In quarantine</div><div class="s-val text-warn">3</div><div class="s-delta"><a href="quarantine.html" class="text-info">review vault →</a></div></div>
+    <div class="card stat"><div class="s-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Signatures</div><div class="s-val" style="font-size:22px">1.42M</div><div class="s-delta up">updated 2h ago · auto</div></div>
+  </div>
+
+  <div class="grid g-2">
+    <div class="card pad-lg rise-2">
+      <div class="card-h"><h3>Persistence surface health</h3>
+        <span class="ch-right"><a href="threats.html" class="text-info" style="font-size:12px">1 finding →</a></span></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M12 5v14"/></svg></div>
+        <div><div class="sn">Run / RunOnce registry keys</div><div class="sd">42 entries audited</div></div>
+        <div class="sv"><span class="pill ok"><span class="dot"></span>clean</span></div></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4h16v6H4zM4 14h16v6H4z"/></svg></div>
+        <div><div class="sn">Startup folders</div><div class="sd">11 entries audited</div></div>
+        <div class="sv"><span class="pill ok"><span class="dot"></span>clean</span></div></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div><div class="sn">Scheduled tasks</div><div class="sd">1 unsigned task flagged</div></div>
+        <div class="sv"><span class="pill warn"><span class="dot"></span>review</span></div></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+        <div><div class="sn">Services &amp; drivers</div><div class="sd">214 services · 96 drivers</div></div>
+        <div class="sv"><span class="pill ok"><span class="dot"></span>clean</span></div></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h18v10H3zM7 21h10"/></svg></div>
+        <div><div class="sn">WMI persistence</div><div class="sd">event consumers audited</div></div>
+        <div class="sv"><span class="pill ok"><span class="dot"></span>clean</span></div></div>
+      <div class="surface-row">
+        <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18"/></svg></div>
+        <div><div class="sn">Browser extensions</div><div class="sd">Chrome 8 · Edge 5 · Firefox 3</div></div>
+        <div class="sv"><span class="pill ok"><span class="dot"></span>clean</span></div></div>
+    </div>
+
+    <div class="card pad-lg rise-3">
+      <div class="card-h"><h3>Recent activity</h3><span class="ch-right"><a href="realtime.html" class="text-info" style="font-size:12px">live feed →</a></span></div>
+      <div class="act-item"><span class="ad" style="background:var(--danger)"></span>
+        <div><div class="at"><b>Blocked</b> Trojan:Win32/Wacatac in download</div><div class="as">invoice_2024.exe → quarantined automatically</div></div><time>4h ago</time></div>
+      <div class="act-item"><span class="ad" style="background:var(--warn)"></span>
+        <div><div class="at"><b>Flagged</b> unsigned scheduled task</div><div class="as">\Microsoft\Windows\UpdaterCheck — review recommended</div></div><time>6h ago</time></div>
+      <div class="act-item"><span class="ad" style="background:var(--info)"></span>
+        <div><div class="at"><b>Updated</b> signature database</div><div class="as">+2,104 signatures · v2024.06.22.02</div></div><time>2h ago</time></div>
+      <div class="act-item"><span class="ad" style="background:var(--accent)"></span>
+        <div><div class="at"><b>Completed</b> quick scan</div><div class="as">18,902 files · 0 threats · 2m 51s</div></div><time>8h ago</time></div>
+      <div class="act-item"><span class="ad" style="background:var(--danger)"></span>
+        <div><div class="at"><b>Blocked</b> process injection attempt</div><div class="as">powershell.exe → explorer.exe (RTP behavioral)</div></div><time>1d ago</time></div>
+      <div class="act-item"><span class="ad" style="background:var(--accent)"></span>
+        <div><div class="at"><b>Completed</b> full scan</div><div class="as">241,338 files · 1 threat · 38m 12s</div></div><time>2d ago</time></div>
+    </div>
+  </div>
+
+<script src="js/shell.js"></script>
+<script>
+  document.addEventListener('click', function(e){
+    var m = e.target.closest('[data-mode]'); if(!m) return;
+    document.querySelectorAll('[data-mode]').forEach(function(x){x.classList.remove('sel');});
+    m.classList.add('sel');
+  });
+</script>
+</body>
+</html>

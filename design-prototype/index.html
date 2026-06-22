@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Open-source Windows Antivirus · Prototype</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body { background:
+    radial-gradient(1100px 500px at 80% -10%, rgba(54,211,153,0.07), transparent 60%),
+    var(--bg); }
+  .launch { max-width: 1180px; margin: 0 auto; padding: 40px 28px 64px; }
+  .lhead { display:flex; align-items:flex-start; gap:18px; margin-bottom: 8px; }
+  .lhead .logo { width:54px; height:54px; border-radius:13px; display:grid; place-items:center;
+    background: linear-gradient(160deg,#16443a,#0e2a24); border:1px solid var(--accent-dim); flex:none; }
+  .lhead .logo svg { width:30px; height:30px; color:var(--accent); }
+  .lhead h1 { font-size: 30px; letter-spacing:-0.02em; }
+  .lhead .tag { color: var(--muted); font-size: 15px; max-width: 60ch; margin-top:6px; }
+  .meta-row { display:flex; flex-wrap:wrap; gap:8px; margin: 22px 0 30px; }
+  .gallery { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+  @media (max-width:960px){ .gallery{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){ .gallery{grid-template-columns:1fr} }
+  .screen-card { display:block; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-lg); overflow:hidden; transition: transform .12s, border-color .12s; }
+  .screen-card:hover { transform: translateY(-3px); border-color: var(--border-2); }
+  .sc-prev { height: 132px; position:relative; overflow:hidden; border-bottom:1px solid var(--border);
+    background: var(--bg-2); display:grid; place-items:center; }
+  .sc-prev svg.glyph { width:40px; height:40px; color:var(--accent); opacity:.9; }
+  .sc-prev .mini-ui { position:absolute; inset:14px; border-radius:8px; border:1px solid var(--hairline);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface)); overflow:hidden; }
+  .sc-body { padding:15px 16px 17px; }
+  .sc-body .n { font-size:14.5px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .sc-body .d { font-size:12.5px; color:var(--muted); margin-top:5px; line-height:1.45; }
+  .sc-tag { font-family:var(--font-mono); font-size:10px; color:var(--faint); letter-spacing:.08em; text-transform:uppercase; }
+  .note { display:flex; gap:11px; padding:14px 16px; border-radius:var(--r); margin-top:30px;
+    background: var(--info-wash); border:1px solid color-mix(in srgb,var(--info) 30%,transparent); }
+  .note svg { width:18px; height:18px; color:var(--info); flex:none; margin-top:1px; }
+  .note p { font-size:12.5px; color:var(--fg-2); line-height:1.5; }
+  .sec-title { font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--faint); margin: 34px 0 14px; }
+</style>
+</head>
+<body>
+<div class="launch rise">
+  <div class="lhead">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <div>
+      <h1>Aegis</h1>
+      <p class="tag">Open-source malware scanner & real-time protection for Windows 10/11. This is the
+      design prototype — UI flows plus the system architecture the Rust engine will implement.</p>
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <span class="pill ok"><span class="dot"></span>Prototype</span>
+    <span class="pill muted">Windows desktop · primary</span>
+    <span class="pill muted">Tauri + React shell</span>
+    <span class="pill muted">Rust core engine</span>
+    <span class="pill muted">SQLite local store</span>
+    <span class="pill info">For implementing engineers</span>
+  </div>
+
+  <div class="sec-title">System design</div>
+  <div class="gallery">
+    <a class="screen-card" href="architecture.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M10 6.5h4M17.5 10v4M10 17.5h4M6.5 10v4"/></svg></div>
+      <div class="sc-body"><div class="n">Architecture &amp; data flow</div>
+        <div class="d">Layered module map, the four-stage detection pipeline, Rust crate layout, and the 7 build phases.</div></div>
+    </a>
+    <a class="screen-card" href="dashboard.html">
+      <div class="sc-prev"><div class="mini-ui"></div><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h8V3H3zM13 21h8V8h-8z"/></svg></div>
+      <div class="sc-body"><div class="n">Dashboard</div>
+        <div class="d">Protection posture, last-scan summary, persistence-surface health, quick scan launch.</div></div>
+    </a>
+    <a class="screen-card" href="scan.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+      <div class="sc-body"><div class="n">Scan in progress</div>
+        <div class="d">Live deep-scan: throughput, per-engine activity, current path, streaming detections.</div></div>
+    </a>
+  </div>
+
+  <div class="sec-title">Protection surfaces</div>
+  <div class="gallery">
+    <a class="screen-card" href="threats.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--danger)"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M12 9v4M12 16h.01"/></svg></div>
+      <div class="sc-body"><div class="n">Threats &amp; report</div>
+        <div class="d">Detection list with risk scoring, the per-threat evidence drawer, recommended actions.</div></div>
+    </a>
+    <a class="screen-card" href="quarantine.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg></div>
+      <div class="sc-body"><div class="n">Quarantine</div>
+        <div class="d">Encrypted vault of isolated files — restore, re-scan, or permanently shred.</div></div>
+    </a>
+    <a class="screen-card" href="realtime.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div class="sc-body"><div class="n">Real-time protection</div>
+        <div class="d">Live shields, the recent-events stream, and ransomware controlled-folder rules.</div></div>
+    </a>
+  </div>
+
+  <div class="sec-title">System &amp; tray</div>
+  <div class="gallery">
+    <a class="screen-card" href="widget.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6"/></svg></div>
+      <div class="sc-body"><div class="n">Mini widget &amp; tray</div>
+        <div class="d">Compact always-on scan widget plus the system-tray menu in four protection states.</div></div>
+    </a>
+    <a class="screen-card" href="settings.html">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8M4.6 9a1.6 1.6 0 0 0-.3-1.8"/></svg></div>
+      <div class="sc-body"><div class="n">Settings &amp; updates</div>
+        <div class="d">Engine toggles, exclusions, signed signature-update flow, and tamper protection.</div></div>
+    </a>
+    <a class="screen-card" href="architecture.html#phases">
+      <div class="sc-prev"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4v16M4 6h12l-2 3 2 3H4"/></svg></div>
+      <div class="sc-body"><div class="n">Build roadmap</div>
+        <div class="d">The 7 development phases with scope, exit criteria, and known limitations.</div></div>
+    </a>
+  </div>
+
+  <div class="note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <p><strong>This is a design prototype, not a shipping scanner.</strong> Numbers, file paths and detections
+    shown are realistic illustrative data for evaluating the UX and the engine architecture — no real scanning
+    happens here. The architecture page is the implementation contract the Rust engine should follow.</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Architecture &amp; System Design</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  /* ---- layered architecture diagram ---- */
+  .arch-stack { display:flex; flex-direction:column; gap:10px; }
+  .layer { border:1px solid var(--border); border-radius:var(--r); background:var(--surface);
+    padding:14px 16px; position:relative; }
+  .layer .lh { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .layer .lh .tagn { font-family:var(--font-mono); font-size:10px; letter-spacing:.12em; color:var(--faint);
+    text-transform:uppercase; }
+  .layer .lh h4 { font-size:13.5px; }
+  .layer .lh .proc { margin-left:auto; }
+  .mods { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:10px; }
+  .mod { background:var(--bg-2); border:1px solid var(--hairline); border-radius:var(--r-sm);
+    padding:11px 12px; }
+  .mod .mt { font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px; }
+  .mod .mt svg { width:14px; height:14px; color:var(--accent); }
+  .mod .md { font-size:11px; color:var(--muted); margin-top:4px; line-height:1.4; }
+  .mod .crate { font-family:var(--font-mono); font-size:10px; color:var(--faint); margin-top:6px; }
+  .layer.l-ui { border-color: color-mix(in srgb,var(--info) 28%,transparent); }
+  .layer.l-core { border-color: color-mix(in srgb,var(--accent) 26%,transparent); }
+  .flowdown { display:grid; place-items:center; color:var(--faint); }
+  .flowdown svg { width:18px; height:18px; }
+
+  /* ---- detection pipeline ---- */
+  .pipe { display:grid; grid-template-columns: repeat(4, 1fr) auto; gap:0; align-items:stretch; }
+  @media (max-width:1024px){ .pipe{grid-template-columns:1fr; gap:10px} .pipe .arrow{display:none} }
+  .stage { background:var(--bg-2); border:1px solid var(--border); border-radius:var(--r);
+    padding:14px; display:flex; flex-direction:column; }
+  .stage .sn { font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:.1em; }
+  .stage h4 { font-size:13.5px; margin:6px 0 4px; }
+  .stage .sd { font-size:11.5px; color:var(--muted); margin-bottom:10px; }
+  .stage ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .stage li { font-size:11.5px; color:var(--fg-2); display:flex; gap:7px; align-items:flex-start; }
+  .stage li::before { content:""; width:5px; height:5px; border-radius:50%; background:var(--accent);
+    margin-top:6px; flex:none; opacity:.8; }
+  .arrow { display:grid; place-items:center; padding:0 6px; color:var(--faint); }
+  .arrow svg { width:20px; height:20px; }
+  .verdict { margin-top:14px; background:var(--accent-wash); border:1px solid var(--accent-dim);
+    border-radius:var(--r); padding:14px 16px; display:flex; gap:12px; align-items:center; }
+  .verdict svg { width:22px; height:22px; color:var(--accent); flex:none; }
+
+  /* ---- code/tree blocks ---- */
+  pre.tree { font-family:var(--font-mono); font-size:12px; line-height:1.65; color:var(--fg-2);
+    background:var(--bg-2); border:1px solid var(--border); border-radius:var(--r); padding:18px 20px;
+    overflow:auto; }
+  pre.tree .dir { color:var(--info); } pre.tree .cm { color:var(--faint); } pre.tree .acc{color:var(--accent);}
+
+  /* ---- sequence / data flow ---- */
+  .seq { display:flex; flex-direction:column; gap:0; }
+  .seq-row { display:grid; grid-template-columns: 34px 1fr; gap:14px; }
+  .seq-row .rail { display:flex; flex-direction:column; align-items:center; }
+  .seq-row .node { width:28px; height:28px; border-radius:50%; background:var(--surface-2);
+    border:1px solid var(--border-2); display:grid; place-items:center; font-family:var(--font-mono);
+    font-size:12px; color:var(--accent); flex:none; }
+  .seq-row .line { flex:1; width:2px; background:var(--border); margin:2px 0; }
+  .seq-row:last-child .line { display:none; }
+  .seq-row .body { padding-bottom:18px; }
+  .seq-row .body .t { font-size:13px; font-weight:600; }
+  .seq-row .body .s { font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45; }
+  .seq-row .body .meta { font-family:var(--font-mono); font-size:10.5px; color:var(--faint); margin-top:5px; }
+
+  /* ---- phases ---- */
+  .phase { display:grid; grid-template-columns: 52px 1fr; gap:16px; padding:16px 0;
+    border-bottom:1px solid var(--hairline); }
+  .phase:last-child { border-bottom:0; }
+  .phase .pnum { font-family:var(--font-mono); font-size:22px; font-weight:600; color:var(--accent);
+    line-height:1; }
+  .phase .pnum .pl { font-size:10px; color:var(--faint); display:block; letter-spacing:.1em; }
+  .phase h4 { font-size:14.5px; margin-bottom:5px; display:flex; align-items:center; gap:10px; }
+  .phase .pdesc { font-size:12.5px; color:var(--fg-2); line-height:1.5; max-width:78ch; }
+  .phase .exit { font-size:11.5px; color:var(--muted); margin-top:7px; }
+  .phase .exit b { color:var(--fg-2); font-weight:600; }
+
+  .twocol { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:860px){ .twocol{grid-template-columns:1fr} }
+  .pts { list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .pts li { font-size:12.5px; color:var(--fg-2); display:flex; gap:9px; line-height:1.45; }
+  .pts li svg { width:15px; height:15px; flex:none; margin-top:2px; }
+</style>
+</head>
+<body data-shell data-active="arch" data-wide data-title="Architecture &amp; system design" data-crumb="Aegis / engineering">
+
+  <div class="flex between items-center mb-16 rise">
+    <div>
+      <span class="eyebrow">Implementation contract</span>
+      <p class="muted mt-8" style="max-width:74ch">How the pieces fit together: a small unprivileged UI process drives a
+      privileged Rust engine service over IPC. The engine owns scanning, the layered detection pipeline, quarantine,
+      and the SQLite store. Everything below is what the Rust workspace should implement.</p>
+    </div>
+  </div>
+
+  <!-- KEY PRINCIPLES -->
+  <div class="grid g-4 mb-16 rise-2">
+    <div class="card stat"><div class="s-label">Language core</div><div class="s-val" style="font-size:20px">Rust</div><div class="s-delta">safe by default · <span class="mono">#![forbid(unsafe)]</span> per crate</div></div>
+    <div class="card stat"><div class="s-label">Processes</div><div class="s-val" style="font-size:20px">2</div><div class="s-delta">UI (user) + engine service (SYSTEM)</div></div>
+    <div class="card stat"><div class="s-label">Detection layers</div><div class="s-val">4</div><div class="s-delta">signature → heuristic → behavioral → ML</div></div>
+    <div class="card stat"><div class="s-label">Targets</div><div class="s-val" style="font-size:20px">Win→x-plat</div><div class="s-delta">platform traits isolate OS calls</div></div>
+  </div>
+
+  <!-- LAYERED MODULE MAP -->
+  <div class="card pad-lg mb-16 rise-2">
+    <div class="card-h"><h3>Layered module map</h3><span class="ch-sub">data flows top → bottom; privilege boundary between UI and engine</span></div>
+    <div class="arch-stack">
+
+      <div class="layer l-ui">
+        <div class="lh"><span class="tagn">Layer 1</span><h4>Presentation — Tauri shell + React</h4>
+          <span class="pill info proc">user process · no elevation</span></div>
+        <div class="mods">
+          <div class="mod"><div class="mt">Views &amp; state</div><div class="md">Dashboard, scan, threats, quarantine, settings, tray.</div><div class="crate">apps/aegis-ui (React/TS)</div></div>
+          <div class="mod"><div class="mt">Tauri commands</div><div class="md">Thin command handlers; serialize requests to the engine.</div><div class="crate">apps/aegis-ui (Rust)</div></div>
+          <div class="mod"><div class="mt">Live event sink</div><div class="md">Subscribes to scan/RTP event stream; renders progress.</div><div class="crate">tauri events</div></div>
+        </div>
+      </div>
+
+      <div class="flowdown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="layer">
+        <div class="lh"><span class="tagn">Layer 2</span><h4>IPC bridge — typed, authenticated</h4>
+          <span class="pill warn proc">privilege boundary</span></div>
+        <div class="mods">
+          <div class="mod"><div class="mt">RPC transport</div><div class="md">Local named pipe (Win) / UDS (Linux/mac). Length-prefixed JSON or bincode.</div><div class="crate">crates/aegis-ipc</div></div>
+          <div class="mod"><div class="mt">AuthN + ACL</div><div class="md">Verifies caller token &amp; signature; rejects unsigned clients (tamper protection).</div><div class="crate">crates/aegis-ipc</div></div>
+          <div class="mod"><div class="mt">Schema contracts</div><div class="md">Shared request/response &amp; event types, versioned.</div><div class="crate">crates/aegis-proto</div></div>
+        </div>
+      </div>
+
+      <div class="flowdown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="layer l-core">
+        <div class="lh"><span class="tagn">Layer 3</span><h4>Engine service — orchestrator</h4>
+          <span class="pill ok proc">SYSTEM service · elevated</span></div>
+        <div class="mods">
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>Scan orchestrator</div><div class="md">Job queue, thread pool, cancellation, progress aggregation.</div><div class="crate">crates/aegis-engine</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h18M3 12h18M3 17h12"/></svg>Walker &amp; classifier</div><div class="md">Recursive traversal, hidden/system files, double-extension &amp; masquerade checks.</div><div class="crate">crates/aegis-scan</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8v8H8z"/></svg>Archive extractor</div><div class="md">ZIP/RAR/7z/TAR/GZIP, recursive, depth + bomb guards.</div><div class="crate">crates/aegis-archive</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>Detection pipeline</div><div class="md">4-stage verdict engine (detailed below).</div><div class="crate">crates/aegis-detect</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v18M15 3v18M3 9h18"/></svg>Memory scanner</div><div class="md">Processes, loaded DLLs, injected modules, suspicious handles/threads.</div><div class="crate">crates/aegis-memory</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Persistence audit</div><div class="md">Run keys, startup, tasks, services, drivers, WMI, browser ext.</div><div class="crate">crates/aegis-persist</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Real-time monitor</div><div class="md">Minifilter/ETW hooks for file, process, download events.</div><div class="crate">crates/aegis-rtp</div></div>
+          <div class="mod"><div class="mt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8"/></svg>Quarantine vault</div><div class="md">AES-GCM encrypted store, restore, shred, metadata journal.</div><div class="crate">crates/aegis-quarantine</div></div>
+        </div>
+      </div>
+
+      <div class="flowdown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="layer">
+        <div class="lh"><span class="tagn">Layer 4</span><h4>Storage &amp; platform</h4>
+          <span class="pill muted proc">local only · no telemetry</span></div>
+        <div class="mods">
+          <div class="mod"><div class="mt">SQLite store</div><div class="md">Signatures, scan history, detections, quarantine index, settings.</div><div class="crate">crates/aegis-store (rusqlite)</div></div>
+          <div class="mod"><div class="mt">Signature cache</div><div class="md">Hot SHA-256/MD5 sets + YARA-style rules, memory-mapped.</div><div class="crate">crates/aegis-store</div></div>
+          <div class="mod"><div class="mt">Updater</div><div class="md">Signed delta signature updates over TLS; rollback on bad signature.</div><div class="crate">crates/aegis-update</div></div>
+          <div class="mod"><div class="mt">Platform traits</div><div class="md">OS abstraction — <span class="mono">Fs</span>, <span class="mono">Proc</span>, <span class="mono">Persistence</span> impls per target.</div><div class="crate">crates/aegis-platform</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DETECTION PIPELINE -->
+  <div class="card pad-lg mb-16 rise-3">
+    <div class="card-h"><h3>Detection pipeline — four layers, one verdict</h3>
+      <span class="ch-sub">each file/object flows left → right; early high-confidence hits short-circuit</span></div>
+    <div class="pipe">
+      <div class="stage">
+        <span class="sn">STAGE A</span><h4>Signature</h4>
+        <div class="sd">Exact, fast, zero false-positives.</div>
+        <ul><li>SHA-256 &amp; MD5 lookup</li><li>Memory-mapped hash sets</li><li>Local cache + signed DB updates</li><li>Known-good allowlist skip</li></ul>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="stage">
+        <span class="sn">STAGE B</span><h4>Heuristic</h4>
+        <div class="sd">Static rules &amp; suspicious traits.</div>
+        <ul><li>Suspicious import/API usage</li><li>Injection &amp; persistence markers</li><li>Obfuscation / packer signatures</li><li>PowerShell &amp; script abuse</li></ul>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="stage">
+        <span class="sn">STAGE C</span><h4>Behavioral</h4>
+        <div class="sd">Runtime activity (RTP / sandbox).</div>
+        <ul><li>File-system &amp; registry events</li><li>Process &amp; network activity</li><li>Mass-encryption (ransomware) heuristic</li><li>Sequence correlation</li></ul>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="stage">
+        <span class="sn">STAGE D</span><h4>ML scoring</h4>
+        <div class="sd">Feature model for the unknown.</div>
+        <ul><li>PE structural features</li><li>Shannon entropy analysis</li><li>String &amp; metadata features</li><li>Calibrated risk score 0–100</li></ul>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+    </div>
+    <div class="verdict">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <div><div style="font-weight:600;font-size:13.5px">Verdict aggregator</div>
+        <div class="muted" style="font-size:12px;max-width:90ch">Combines layer outputs into a weighted risk score and severity (clean / suspicious / malicious),
+        attaches the matched evidence, and emits a <span class="mono">Detection</span> record → UI + quarantine recommendation. Weights and thresholds are configurable per scan mode.</div></div>
+    </div>
+  </div>
+
+  <!-- DATA FLOW SEQUENCE + CRATE TREE -->
+  <div class="twocol mb-16">
+    <div class="card pad-lg">
+      <div class="card-h"><h3>Scan request — end-to-end flow</h3></div>
+      <div class="seq">
+        <div class="seq-row"><div class="rail"><div class="node">1</div><div class="line"></div></div>
+          <div class="body"><div class="t">UI dispatches scan job</div><div class="s">User picks Quick/Full/Deep/Custom; Tauri command → IPC request with scan profile.</div><div class="meta">aegis-ui → aegis-ipc · ScanRequest{mode, roots, opts}</div></div></div>
+        <div class="seq-row"><div class="rail"><div class="node">2</div><div class="line"></div></div>
+          <div class="body"><div class="t">Orchestrator enumerates targets</div><div class="s">Walker streams paths; archives expanded; cache filters unchanged files (incremental).</div><div class="meta">aegis-scan + aegis-archive · WorkItem stream</div></div></div>
+        <div class="seq-row"><div class="rail"><div class="node">3</div><div class="line"></div></div>
+          <div class="body"><div class="t">Workers run detection pipeline</div><div class="s">Thread pool runs each item through stages A→D; verdicts aggregated with evidence.</div><div class="meta">aegis-detect · rayon pool · Verdict</div></div></div>
+        <div class="seq-row"><div class="rail"><div class="node">4</div><div class="line"></div></div>
+          <div class="body"><div class="t">Progress streamed back</div><div class="s">Throughput, current path and new detections pushed as events to the UI live view.</div><div class="meta">engine → tauri events · ScanProgress</div></div></div>
+        <div class="seq-row"><div class="rail"><div class="node">5</div><div class="line"></div></div>
+          <div class="body"><div class="t">Persist &amp; act</div><div class="s">Detections written to SQLite; malicious items recommended for the encrypted quarantine vault.</div><div class="meta">aegis-store + aegis-quarantine</div></div></div>
+      </div>
+    </div>
+
+    <div class="card pad-lg">
+      <div class="card-h"><h3>Rust workspace layout</h3><span class="ch-sub">cargo workspace, one crate per concern</span></div>
+<pre class="tree"><span class="cm"># Cargo workspace — engine is OS-agnostic; platform impls are swappable</span>
+aegis/
+├─ <span class="dir">apps/</span>
+│  ├─ <span class="dir">aegis-ui/</span>        <span class="cm"># Tauri + React desktop shell</span>
+│  └─ <span class="dir">aegis-svc/</span>       <span class="cm"># elevated engine service (SYSTEM)</span>
+├─ <span class="dir">crates/</span>
+│  ├─ <span class="acc">aegis-engine/</span>    <span class="cm"># orchestrator, job queue, pool</span>
+│  ├─ aegis-scan/      <span class="cm"># walker, classifier, masquerade</span>
+│  ├─ aegis-archive/   <span class="cm"># zip/rar/7z/tar/gzip, recursive</span>
+│  ├─ <span class="acc">aegis-detect/</span>    <span class="cm"># 4-stage pipeline + aggregator</span>
+│  │  ├─ signature.rs
+│  │  ├─ heuristic.rs
+│  │  ├─ behavioral.rs
+│  │  └─ ml.rs         <span class="cm"># PE features, entropy, scoring</span>
+│  ├─ aegis-memory/    <span class="cm"># process/DLL/injection scan</span>
+│  ├─ aegis-persist/   <span class="cm"># run keys, tasks, WMI, drivers…</span>
+│  ├─ aegis-rtp/       <span class="cm"># minifilter/ETW real-time hooks</span>
+│  ├─ aegis-quarantine/<span class="cm"># AES-GCM vault, restore, shred</span>
+│  ├─ aegis-store/     <span class="cm"># SQLite (rusqlite) + sig cache</span>
+│  ├─ aegis-update/    <span class="cm"># signed delta updates, rollback</span>
+│  ├─ aegis-ipc/       <span class="cm"># pipe/UDS RPC + auth</span>
+│  ├─ aegis-proto/     <span class="cm"># shared types, versioned schema</span>
+│  └─ <span class="acc">aegis-platform/</span>  <span class="cm"># Fs/Proc/Persistence traits</span>
+│     ├─ windows.rs    <span class="cm"># primary target</span>
+│     ├─ linux.rs      <span class="cm"># future</span>
+│     └─ macos.rs      <span class="cm"># future</span>
+├─ <span class="dir">signatures/</span>        <span class="cm"># bundled baseline DB + rules</span>
+├─ <span class="dir">tests/</span>             <span class="cm"># integration + EICAR fixtures</span>
+└─ Cargo.toml          <span class="cm"># [workspace] members</span></pre>
+    </div>
+  </div>
+
+  <!-- PRIVILEGE / SECURITY -->
+  <div class="card pad-lg mb-16">
+    <div class="card-h"><h3>Security model &amp; privilege separation</h3></div>
+    <div class="twocol">
+      <ul class="pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>Two-process split.</b> The UI runs unprivileged; only the engine service runs as SYSTEM. A compromised UI can't touch protected resources directly — it can only send authenticated IPC requests.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>No unsafe by default.</b> Each crate sets <span class="mono">#![forbid(unsafe_code)]</span>; OS calls that require it are isolated in <span class="mono">aegis-platform</span> behind audited wrappers.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>Tamper protection.</b> Service binary &amp; signature DB are integrity-checked; the service rejects IPC from unsigned clients and guards its own files/registry keys.</span></li>
+      </ul>
+      <ul class="pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>Signed updates.</b> Signature/rule updates are delta-downloaded over TLS, verified against a pinned public key, and atomically swapped with rollback on failure.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>Encrypted quarantine.</b> Isolated files are AES-GCM encrypted at rest with a key in the OS keystore (DPAPI on Windows); originals are neutralised on capture.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span><b>Local-first &amp; private.</b> All data stays on the device. No cloud lookups unless the user explicitly opts into a community reputation feed.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PHASES -->
+  <div class="card pad-lg mb-16" id="phases">
+    <div class="card-h"><h3>Build roadmap — 7 phases</h3><span class="ch-sub">each phase ships a usable vertical slice</span></div>
+
+    <div class="phase"><div class="pnum">01<span class="pl">DONE-ISH</span></div><div>
+      <h4>Architecture &amp; scaffolding <span class="pill ok"><span class="dot"></span>this doc</span></h4>
+      <div class="pdesc">Cargo workspace, crate boundaries, IPC schema, platform trait surface, SQLite schema, and the two-process security model.</div>
+      <div class="exit"><b>Exit:</b> empty crates compile; UI ↔ service IPC round-trips a ping; CI on Windows + Linux.</div></div></div>
+
+    <div class="phase"><div class="pnum">02</div><div>
+      <h4>Scanner engine</h4>
+      <div class="pdesc">Recursive walker (hidden/system files), file classifier, double-extension &amp; masquerade detection, packed-executable flag, archive extraction with depth/bomb guards, multithreaded job pool, incremental cache.</div>
+      <div class="exit"><b>Exit:</b> Quick/Full/Deep scans enumerate and hash a real disk with progress events and cancellation.</div></div></div>
+
+    <div class="phase"><div class="pnum">03</div><div>
+      <h4>Detection engine</h4>
+      <div class="pdesc">Signature matching (SHA-256/MD5 + rules), heuristic ruleset, PE feature extraction + entropy + string analysis, calibrated risk scoring, and the verdict aggregator. Memory &amp; persistence scanners.</div>
+      <div class="exit"><b>Exit:</b> detects EICAR + curated test corpus; false-positive rate measured on a clean baseline.</div></div></div>
+
+    <div class="phase"><div class="pnum">04</div><div>
+      <h4>Real-time protection</h4>
+      <div class="pdesc">File create/modify and process-execution hooks (minifilter / ETW), download monitoring, controlled-folder ransomware rules, behavioral correlation feeding stage C.</div>
+      <div class="exit"><b>Exit:</b> on-access blocking with acceptable overhead; ransomware canary test triggers a block.</div></div></div>
+
+    <div class="phase"><div class="pnum">05</div><div>
+      <h4>GUI</h4>
+      <div class="pdesc">The Tauri + React surfaces in this prototype: dashboard, live scan, threats &amp; report, quarantine, real-time, settings/updates, tray + mini widget.</div>
+      <div class="exit"><b>Exit:</b> every engine capability is reachable and observable from the UI; tray reflects live state.</div></div></div>
+
+    <div class="phase"><div class="pnum">06</div><div>
+      <h4>Testing &amp; hardening</h4>
+      <div class="pdesc">Unit + integration tests per crate, malware-corpus regression suite (in an isolated VM), fuzzing of archive/PE parsers, performance benchmarks, and a tamper-protection audit.</div>
+      <div class="exit"><b>Exit:</b> green CI, fuzz targets stable, detection &amp; FP metrics tracked over time.</div></div></div>
+
+    <div class="phase"><div class="pnum">07</div><div>
+      <h4>Packaging &amp; release</h4>
+      <div class="pdesc">Code-signed MSI/MSIX installer, service registration, signed signature feed + auto-update channel, reproducible builds, and release docs.</div>
+      <div class="exit"><b>Exit:</b> signed installer deploys the service + UI; updates verify and roll back cleanly.</div></div></div>
+  </div>
+
+  <!-- LIMITATIONS + IMPROVEMENTS -->
+  <div class="twocol">
+    <div class="card pad-lg">
+      <div class="card-h"><h3>Known limitations</h3><span class="pill warn"><span class="dot"></span>be honest</span></div>
+      <ul class="pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.7"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Kernel-level threats &amp; bootkits need a signed driver — out of scope until a driver-signing path exists.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.7"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>The ML layer is heuristic, not a guarantee — risk scores reduce but don't eliminate false positives/negatives.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.7"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>RAR/7z formats may require bundling/licensing decompression libraries; encrypted archives can't be inspected.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.7"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Real-time hooks add I/O latency; needs careful exclusion lists to stay usable on busy workstations.</span></li>
+      </ul>
+    </div>
+    <div class="card pad-lg">
+      <div class="card-h"><h3>Future improvements</h3><span class="pill info"><span class="dot"></span>roadmap</span></div>
+      <ul class="pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Optional cloud reputation &amp; community signature sharing (privacy-preserving, opt-in).</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>YARA rule import so researchers can extend detection without recompiling.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Sandboxed detonation for unknown binaries to strengthen the behavioral layer.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.7"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Linux/macOS engine builds via the platform traits; central console for IT-admin fleets.</span></li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+<script src="js/shell.js"></script>
+</html>

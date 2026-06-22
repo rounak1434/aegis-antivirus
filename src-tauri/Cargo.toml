@@ -1,0 +1,20 @@
+[package]
+name = "aegis-tauri"
+version = "0.1.0-phase1"
+edition.workspace = true
+license.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+aegis-common = { path = "../crates/aegis-common" }
+aegis-ipc = { path = "../crates/aegis-ipc" }
+chrono.workspace = true
+serde.workspace = true
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+thiserror.workspace = true
+tracing.workspace = true

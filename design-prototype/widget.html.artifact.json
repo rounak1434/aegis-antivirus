@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "widget.html",
+  "entry": "widget.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-06-22T16:32:22.132Z",
+  "updatedAt": "2026-06-22T16:32:22.132Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

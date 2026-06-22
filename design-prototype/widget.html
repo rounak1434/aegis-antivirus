@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Mini Widget &amp; System Tray</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+/* ── Claude (Anthropic) design system override ───────────────────
+   Warm parchment canvas, terracotta accent, exclusively warm-toned
+   neutrals. Parchment (bg) → Ivory (surface) → Warm Sand.
+   ────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Always-dark / Claude (Anthropic) dark mode ────────────── */
+  --bg: #141413;            /* Deep Dark — warmest "black" */
+  --bg-2: #1c1c1a;         /* One step above bg */
+  --surface: #30302e;       /* Dark Surface — containers, cards */
+  --surface-2: #252523;     /* Between bg and surface */
+  --raised: #3d3d3a;        /* Dark Warm — elevated */
+  --fg: #faf9f5;            /* Ivory — primary text */
+  --fg-2: #b0aea5;          /* Warm Silver — secondary */
+  --muted: #87867f;         /* Stone Gray — body muted */
+  --faint: #6b6964;         /* De-emphasized metadata */
+  --border: #30302e;        /* Border Dark */
+  --border-2: #3d3d3a;      /* Slightly lighter divider */
+  --hairline: rgba(255,255,255,0.06);
+  --accent: #c96442;         /* Terracotta Brand */
+  --accent-dim: #d97757;     /* Lighter terracotta for dark borders */
+  --accent-wash: rgba(201,100,66,0.15);
+  --danger: #d13d3d;         /* Brighter crimson for dark */
+  --danger-wash: rgba(209,61,61,0.12);
+  --warn: #d9a84a;           /* Warm gold for dark */
+  --warn-wash: rgba(217,168,74,0.12);
+  --info: #3898ec;           /* Focus Blue — accessibility */
+  --info-wash: rgba(56,152,236,0.12);
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-sans: "Arial", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --r-sm: 8px;
+  --r: 8px;
+  --r-lg: 12px;
+  --shadow: 0 0 0 1px rgba(255,255,255,0.06);
+  --sb-w: 236px;
+  --tb-h: 56px;
+}
+
+/* ── Section headings in serif ── */
+.card-h h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+/* ── Override primary button for terracotta bg ── */
+.btn.primary { color: #faf9f5; }
+.btn.primary:hover { color: #faf9f5; }
+
+/* ── Desktop mock canvas (warm parchment) ── */
+.desk-mock {
+  position: relative; min-height: 420px;
+  background:
+    radial-gradient(900px 500px at 70% 20%, rgba(201,100,66,0.14), transparent 70%),
+    radial-gradient(600px 400px at 20% 80%, rgba(201,134,66,0.10), transparent 60%),
+    var(--bg);
+  border-radius: var(--r); overflow: hidden; padding: 24px 28px;
+}
+
+/* ── Mini widget card (Ivory on Parchment) ── */
+.mini-widget {
+  width: 380px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 16px;
+  box-shadow: var(--shadow);
+}
+.mw-h { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.mw-h .mw-logo { width:28px;height:28px;border-radius:7px;display:grid;place-items:center;
+  background: var(--accent-wash); border:1px solid var(--accent-dim);flex:none; }
+.mw-h .mw-logo svg { width:15px;height:15px;color:var(--accent); }
+.mw-h .mw-b { font-size:13px;font-weight:600; }
+.mw-h .mw-s { margin-left:auto; }
+.mw-body { display:flex; gap:16px; align-items:center; }
+.mw-ring { position:relative; width:90px;height:90px;flex:none; }
+.mw-ring svg { transform:rotate(-90deg); display:block; }
+.mw-ring .c { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center; }
+.mw-ring .c .ipct { font-family:var(--font-mono);font-size:18px;font-weight:600;letter-spacing:-.02em; }
+.mw-ring .c .ip { font-size:9px;color:var(--faint);letter-spacing:.06em; }
+.mw-d { flex:1; }
+.mw-d .mdl { font-size:12px;display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--hairline); }
+.mw-d .mdl:last-child{border-bottom:0;}
+.mw-d .mdl .ml { color:var(--muted); }
+.mw-d .mdl .mv { font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums; }
+.mw-d .mdl .mv.threat { color:var(--danger); }
+.mw-actions { display:flex; gap:8px; margin-top:12px; }
+.widget-row { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+
+/* ── State cards (4-up grid) ── */
+.states { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+@media (max-width:980px){ .states{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:540px){ .states{grid-template-columns:1fr} }
+.state-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+  padding:16px; text-align:center; cursor:pointer;
+  transition:border-color .15s,box-shadow .15s;
+}
+.state-card:hover { border-color:var(--border-2); }
+.state-card .st-icon { width:56px;height:56px;border-radius:14px;display:grid;place-items:center;margin:0 auto 11px; }
+.state-card .st-icon svg { width:28px;height:28px; }
+.state-card .st-t { font-size:14.5px;font-weight:600; }
+.state-card .st-d { font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4; }
+.state-card .st-tag { margin-top:10px; }
+.state-card.ok .st-icon { background:var(--accent-wash);border:1px solid var(--accent-dim); }
+.state-card.ok .st-icon svg { color:var(--accent); }
+.state-card.warn .st-icon { background:var(--warn-wash);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent); }
+.state-card.warn .st-icon svg { color:var(--warn); }
+.state-card.danger .st-icon { background:var(--danger-wash);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent); }
+.state-card.danger .st-icon svg { color:var(--danger); }
+.state-card.off .st-icon { background:rgba(255,255,255,0.05);border:1px solid var(--border); }
+.state-card.off .st-icon svg { color:var(--faint); }
+.state-card.active.ok { border-color:var(--accent-dim);box-shadow:0 0 0 1px var(--accent-dim); }
+.state-card.active.warn { border-color:color-mix(in srgb,var(--warn) 35%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--warn) 30%,transparent); }
+.state-card.active.danger { border-color:color-mix(in srgb,var(--danger) 35%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--danger) 30%,transparent); }
+.state-card.active.off { border-color:var(--border-2);box-shadow:0 0 0 1px var(--border); }
+
+/* ── Tray flyout ── */
+.tray-section { display:flex; gap:24px; align-items:flex-start; margin-top:14px; flex-wrap:wrap; }
+.tray-flyout {
+  width:300px; background:var(--surface); border:1px solid var(--border-2);
+  border-radius:var(--r-lg); box-shadow:var(--shadow); overflow:hidden;
+}
+.tray-f-head { padding:14px 16px 10px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+.tray-f-head .tf-l { width:32px;height:32px;border-radius:8px;display:grid;place-items:center;
+  background:var(--accent-wash);border:1px solid var(--accent-dim);flex:none; }
+.tray-f-head .tf-l svg { width:17px;height:17px;color:var(--accent); }
+.tray-f-head .tf-b { font-size:13px;font-weight:600; }
+.tray-f-head .tf-s { margin-left:auto; }
+.tray-f-body { padding:8px; }
+.tray-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--r-sm);
+    cursor:pointer; font-size:13px; color:var(--fg-2); transition:background .1s; }
+.tray-item:hover { background:rgba(255,255,255,0.05);color:var(--fg); }
+.tray-item svg { width:16px;height:16px;flex:none;color:var(--muted); }
+.tray-divider { height:1px; background:var(--border); margin:4px 8px; }
+
+.tray-icons { flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:10px; }
+.tray-icon {
+  width:48px;height:48px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);
+  display:grid;place-items:center;cursor:pointer;
+  transition:border-color .15s;
+}
+.tray-icon:hover { border-color:var(--border-2); }
+.tray-icon svg { width:24px;height:24px; }
+.tray-icon.ok svg { color:var(--accent); }
+.tray-icon.ok.active { border-color:var(--accent-dim);box-shadow:0 0 0 1px var(--accent-dim); }
+.tray-icon.warn svg { color:var(--warn); }
+.tray-icon.warn.active { border-color:color-mix(in srgb,var(--warn) 35%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--warn) 30%,transparent); }
+.tray-icon.danger svg { color:var(--danger); }
+.tray-icon.danger.active { border-color:color-mix(in srgb,var(--danger) 35%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--danger) 30%,transparent); }
+.tray-icon.off svg { color:var(--faint); }
+.tray-icon.off.active { border-color:var(--border-2);box-shadow:0 0 0 1px var(--border); }
+</style>
+</head>
+<body data-shell data-active="widget" data-title="Mini widget &amp; system tray" data-crumb="Aegis / system">
+
+  <div class="card pad-lg mb-16 rise-2">
+    <div class="card-h">
+      <h3>Mini scan widget</h3>
+      <span class="ch-sub">320&times;auto, sits above the taskbar, user-movable</span>
+      <div class="ch-right"><span class="pill ok"><span class="dot"></span>active scan</span></div>
+    </div>
+    <div class="desk-mock">
+      <div class="widget-row">
+
+        <div class="mini-widget" data-state="scanning">
+          <div class="mw-h">
+            <div class="mw-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <span class="mw-b">Aegis — scanning</span>
+            <span class="pill ok sm mw-s"><span class="dot"></span>live</span>
+          </div>
+          <div class="mw-body">
+            <div class="mw-ring">
+              <svg width="90" height="90" viewBox="0 0 90 90" class="ring-svg">
+                <circle cx="45" cy="45" r="37" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="37" fill="none" stroke="var(--accent)" stroke-width="7"
+                  stroke-linecap="round" class="a-ring" data-pct="80"/>
+              </svg>
+              <div class="c"><div class="ipct ring-pct">80%</div><div class="ip">scanning</div></div>
+            </div>
+            <div class="mw-d">
+              <div class="mdl"><span class="ml">Files scanned</span><span class="mv">192,447</span></div>
+              <div class="mdl"><span class="ml">Throughput</span><span class="mv">1,420 f/s</span></div>
+              <div class="mdl"><span class="ml">Detections</span><span class="mv threat">3</span></div>
+              <div class="mdl"><span class="ml">Elapsed</span><span class="mv">32:14</span></div>
+            </div>
+          </div>
+          <div class="mw-actions">
+            <button class="btn primary sm scan-trigger" style="flex:1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Quick scan
+            </button>
+            <button class="btn ghost sm" title="Pause">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+            </button>
+            <button class="btn ghost sm" title="Close widget">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="mini-widget" data-state="idle" style="opacity:.85">
+          <div class="mw-h">
+            <div class="mw-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <span class="mw-b">Aegis — protected</span>
+            <span class="pill ok sm mw-s"><span class="dot"></span>idle</span>
+          </div>
+          <div class="mw-body">
+            <div class="mw-ring">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="37" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="37" fill="none" stroke="var(--accent)" stroke-width="7"
+                  stroke-linecap="round" class="a-ring" data-pct="100"/>
+              </svg>
+              <div class="c">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:28px;height:28px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+            </div>
+            <div class="mw-d">
+              <div class="mdl"><span class="ml">Last scan</span><span class="mv">2h ago — full</span></div>
+              <div class="mdl"><span class="ml">Threats blocked</span><span class="mv">142 (7d)</span></div>
+              <div class="mdl"><span class="ml">Signatures</span><span class="mv">1.42M</span></div>
+              <div class="mdl"><span class="ml">Defs age</span><span class="mv">2h — current</span></div>
+            </div>
+          </div>
+          <div class="mw-actions">
+            <button class="btn primary sm" style="flex:1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Quick scan
+            </button>
+            <button class="btn ghost sm" style="flex:1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>Dashboard
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="card pad-lg mb-16 rise-2">
+    <div class="card-h">
+      <h3>System-tray states</h3>
+      <span class="ch-sub">click a state to preview the tray icon and flyout</span>
+    </div>
+    <div class="states" id="state-grid">
+      <div class="state-card ok active" data-tray="ok">
+        <div class="st-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="st-t">Protected</div>
+        <div class="st-d">All shields active, definitions current. The steady-state shown 90%+ of uptime.</div>
+        <div class="st-tag"><span class="pill ok"><span class="dot"></span>default state</span></div>
+      </div>
+      <div class="state-card warn" data-tray="warn">
+        <div class="st-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div class="st-t">Warning</div>
+        <div class="st-d">One or more shields disabled, signatures stale, or a suspicious item needs review.</div>
+        <div class="st-tag"><span class="pill warn"><span class="dot"></span>attention</span></div>
+      </div>
+      <div class="state-card danger" data-tray="danger">
+        <div class="st-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M12 9v4M12 16h.01"/></svg></div>
+        <div class="st-t">Threat detected</div>
+        <div class="st-d">An active malware detection has not been resolved. Tray icon pulses red until actioned.</div>
+        <div class="st-tag"><span class="pill danger"><span class="dot"></span>action required</span></div>
+      </div>
+      <div class="state-card off" data-tray="off">
+        <div class="st-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        <div class="st-t">Disabled</div>
+        <div class="st-d">Real-time protection is off. Icon turns grey with a strikethrough. No monitoring active.</div>
+        <div class="st-tag"><span class="pill muted"><span class="dot"></span>inactive</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card pad-lg rise-2">
+    <div class="card-h">
+      <h3>Tray menu</h3>
+      <span class="ch-sub">right-click or single-click the icon</span>
+    </div>
+    <div class="tray-section">
+      <div style="flex:1;min-width:220px">
+        <div class="tray-flyout" id="tray-flyout">
+          <div class="tray-f-head">
+            <div class="tf-l">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <span class="tf-b">Aegis Security</span>
+            <span class="pill ok sm tf-s" id="flyout-pill"><span class="dot"></span>protected</span>
+          </div>
+          <div class="tray-f-body" id="flyout-body">
+            <div class="tray-item" data-action="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 13h8V3H3zM13 21h8V8h-8z"/></svg>Open dashboard</div>
+            <div class="tray-item" data-action="quickscan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Quick scan</div>
+            <div class="tray-item" data-action="fullscan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>Full scan</div>
+            <div class="tray-item" data-action="threats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>View threats</div>
+            <div class="tray-divider"></div>
+            <div class="tray-item" data-action="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 15a1.6 1.6 0 0 0-1.5-1H2a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4 8.6a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9 4V2a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H22a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>Settings</div>
+            <div class="tray-item" data-action="update"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Check for updates</div>
+            <div class="tray-divider"></div>
+            <div class="tray-item" id="toggle-protection" style="color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>Disable protection</div>
+            <div class="tray-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Exit</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tray-icons">
+        <span class="eyebrow" style="margin:0;font-size:10px">tray icon</span>
+        <div class="tray-icon ok active" data-state="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="tray-icon warn" data-state="warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div class="tray-icon danger" data-state="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M12 9v4M12 16h.01"/></svg></div>
+        <div class="tray-icon off" data-state="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+<script src="js/shell.js"></script>
+<script>
+(function() {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Ring progress setup ── */
+  var rings = document.querySelectorAll('.a-ring');
+  var C = 2 * Math.PI * 37;
+  rings.forEach(function(el) {
+    el.setAttribute('stroke-dasharray', C);
+    var pct = parseFloat(el.getAttribute('data-pct')) || 100;
+    el.setAttribute('stroke-dashoffset', C * (1 - pct / 100));
+  });
+
+  if (reduceMotion) return;
+
+  /* ── Load animation: stagger state cards + tray items ── */
+  var cards = gsap.utils.toArray('.state-card');
+  if (cards.length) {
+    gsap.from(cards, { opacity:0, y:10, stagger:0.07, duration:0.3, ease:'power2.out' });
+  }
+
+  var trayItems = gsap.utils.toArray('.tray-item');
+  if (trayItems.length) {
+    gsap.from(trayItems, { opacity:0, x:-6, stagger:0.035, duration:0.18, ease:'power2.out' });
+  }
+
+  /* ── Scan button: animate ring progress ── */
+  var scanBtns = document.querySelectorAll('.scan-trigger');
+  var activeRing = document.querySelector('[data-state="scanning"] .a-ring');
+  scanBtns.forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!activeRing) return;
+      gsap.to(activeRing, {
+        strokeDashoffset: C * 0.2,
+        duration: 1.8,
+        ease: 'power1.inOut',
+        onUpdate: function() {
+          var pct = Math.round((1 - this.progress() * 0.8) * 100);
+          var pctEl = activeRing.closest('.mw-ring').querySelector('.ring-pct');
+          if (pctEl) pctEl.textContent = pct + '%';
+        }
+      });
+      gsap.fromTo(btn, { scale:0.96 }, { scale:1, duration:0.12, ease:'back.out(2)' });
+    });
+  });
+
+  /* ── State config map ── */
+  var states = {
+    ok: {
+      pillClass: 'ok', pillText: 'protected',
+      toggleText: 'Disable protection', toggleColor: 'var(--danger)', toggleIcon: 'disable',
+      activeCardClass: 'ok'
+    },
+    warn: {
+      pillClass: 'warn', pillText: 'attention',
+      toggleText: 'Review alerts', toggleColor: 'var(--warn)', toggleIcon: 'warn',
+      activeCardClass: 'warn'
+    },
+    danger: {
+      pillClass: 'danger', pillText: 'action required',
+      toggleText: 'Quarantine threats', toggleColor: 'var(--danger)', toggleIcon: 'danger',
+      activeCardClass: 'danger'
+    },
+    off: {
+      pillClass: 'muted', pillText: 'inactive',
+      toggleText: 'Enable protection', toggleColor: 'var(--accent)', toggleIcon: 'enable',
+      activeCardClass: 'off'
+    }
+  };
+
+  var pill = document.getElementById('flyout-pill');
+  var toggleItem = document.getElementById('toggle-protection');
+
+  function setState(state) {
+    var s = states[state];
+    if (!s) return;
+
+    /* ── Update flyout pill ── */
+    gsap.to(pill, { opacity:0, duration:0.08, onComplete: function() {
+      pill.className = 'pill sm tf-s ' + s.pillClass;
+      pill.innerHTML = '<span class="dot"></span>' + s.pillText;
+      gsap.to(pill, { opacity:1, duration:0.12 });
+    }});
+
+    /* ── Update toggle protection item ── */
+    var iconSvg = toggleItem.querySelector('svg');
+    var iconHtml = iconSvg ? iconSvg.outerHTML : '';
+    toggleItem.innerHTML = iconHtml + s.toggleText;
+    toggleItem.style.color = s.toggleColor;
+
+    /* ── Update state cards ── */
+    document.querySelectorAll('.state-card').forEach(function(c) {
+      c.classList.remove('active');
+      if (c.getAttribute('data-tray') === state) {
+        c.classList.add('active');
+      }
+    });
+
+    /* ── Update tray icons ── */
+    document.querySelectorAll('.tray-icon').forEach(function(ic) {
+      ic.classList.remove('active');
+      if (ic.getAttribute('data-state') === state) {
+        ic.classList.add('active');
+        gsap.fromTo(ic, { scale:0.9 }, { scale:1, duration:0.15, ease:'power2.out' });
+      }
+    });
+  }
+
+  /* ── Click state cards ── */
+  document.querySelectorAll('.state-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      var state = card.getAttribute('data-tray');
+      setState(state);
+    });
+  });
+
+  /* ── Click tray icons ── */
+  document.querySelectorAll('.tray-icon').forEach(function(ic) {
+    ic.addEventListener('click', function() {
+      var state = ic.getAttribute('data-state');
+      setState(state);
+    });
+  });
+})();
+</script>
+</body>
+</html>

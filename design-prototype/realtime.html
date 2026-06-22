@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis — Real-time Protection</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .shield-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  @media (max-width:760px){ .shield-grid{grid-template-columns:1fr} }
+  .shield { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:16px; }
+  .shield .sh { display:flex; align-items:center; gap:12px; }
+  .shield .ico { width:38px;height:38px;border-radius:9px;display:grid;place-items:center;flex:none;
+    background:var(--accent-wash); border:1px solid var(--accent-dim); }
+  .shield .ico svg { width:19px;height:19px;color:var(--accent); }
+  .shield.off .ico { background:rgba(255,255,255,0.04); border-color:var(--border); }
+  .shield.off .ico svg { color:var(--faint); }
+  .shield .st { font-weight:600; font-size:13.5px; } .shield .ss { font-size:11.5px; color:var(--muted); }
+  .shield .desc { font-size:12px; color:var(--fg-2); margin-top:11px; line-height:1.45; }
+  /* toggle */
+  .toggle { margin-left:auto; width:42px;height:24px;border-radius:14px;background:var(--accent);
+    position:relative; cursor:pointer; transition:background .15s; flex:none; border:0; }
+  .toggle::after { content:""; position:absolute; top:3px; left:21px; width:18px;height:18px;border-radius:50%;
+    background:#06140d; transition:left .15s; }
+  .toggle.off { background:rgba(255,255,255,0.12); } .toggle.off::after { left:3px; background:var(--faint); }
+  .ev-row { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; padding:11px 4px;
+    border-bottom:1px solid var(--hairline); }
+  .ev-row:last-child{border-bottom:0;}
+  .ev-row .ed { width:8px;height:8px;border-radius:50%; flex:none; }
+  .ev-row .em { font-size:12.5px; } .ev-row .es { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
+  .ev-row time { font-family:var(--font-mono); font-size:10.5px; color:var(--faint); }
+  .cf { display:flex; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid var(--hairline); }
+  .cf:last-child{border-bottom:0;} .cf .fp { font-family:var(--font-mono); font-size:12px; color:var(--fg-2); }
+</style>
+</head>
+<body data-shell data-active="realtime" data-title="Real-time protection" data-crumb="Aegis / protection">
+
+  <div class="vault-banner rise" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:9px;background:var(--accent-wash);border:1px solid var(--accent-dim);margin-bottom:16px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:22px;height:22px;color:var(--accent)"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <div style="flex:1"><div style="font-weight:600;font-size:13.5px">Real-time protection is active</div>
+      <div style="font-size:12px;color:var(--muted)">5 of 6 shields on · monitoring file, process, registry, network &amp; download events live</div></div>
+    <span class="pill ok"><span class="dot"></span>active</span>
+  </div>
+
+  <div class="shield-grid mb-16 rise-2">
+    <div class="shield">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h18M3 12h18M3 17h12"/></svg></div>
+        <div><div class="st">File system shield</div><div class="ss">on-access scan · minifilter</div></div>
+        <button class="toggle"></button></div>
+      <div class="desc">Scans files on create &amp; modify before they're written. Blocks known-bad writes inline.</div>
+    </div>
+    <div class="shield">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v18M15 3v18M3 9h18"/></svg></div>
+        <div><div class="st">Process &amp; injection shield</div><div class="ss">ETW · execution monitoring</div></div>
+        <button class="toggle"></button></div>
+      <div class="desc">Watches process launches and cross-process memory writes; blocks injection into trusted processes.</div>
+    </div>
+    <div class="shield">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg></div>
+        <div><div class="st">Ransomware shield</div><div class="ss">controlled folder access</div></div>
+        <button class="toggle"></button></div>
+      <div class="desc">Detects mass-encryption behaviour and blocks untrusted apps from modifying protected folders.</div>
+    </div>
+    <div class="shield">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></div>
+        <div><div class="st">Download shield</div><div class="ss">browser &amp; SmartScreen-style</div></div>
+        <button class="toggle"></button></div>
+      <div class="desc">Scans downloaded files as they land and checks reputation before the user can open them.</div>
+    </div>
+    <div class="shield">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M12 5v14"/></svg></div>
+        <div><div class="st">Registry shield</div><div class="ss">persistence keys</div></div>
+        <button class="toggle"></button></div>
+      <div class="desc">Alerts on writes to Run keys, services, and other autostart locations from untrusted processes.</div>
+    </div>
+    <div class="shield off">
+      <div class="sh"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18"/></svg></div>
+        <div><div class="st">Network shield</div><div class="ss">C2 / beacon detection</div></div>
+        <button class="toggle off"></button></div>
+      <div class="desc">Flags suspicious outbound connections and known command-and-control endpoints. Currently off.</div>
+    </div>
+  </div>
+
+  <div class="grid g-2">
+    <div class="card pad-lg rise-2">
+      <div class="card-h"><h3>Live protection events</h3><span class="ch-right"><span class="pill ok" style="font-size:10px"><span class="dot"></span>streaming</span></span></div>
+      <div id="evfeed">
+        <div class="ev-row"><span class="ed" style="background:var(--danger)"></span><div><div class="em"><b>Blocked</b> process injection</div><div class="es">powershell.exe → explorer.exe</div></div><time>just now</time></div>
+        <div class="ev-row"><span class="ed" style="background:var(--accent)"></span><div><div class="em"><b>Scanned</b> download · clean</div><div class="es">setup_legit.msi · signed</div></div><time>2m</time></div>
+        <div class="ev-row"><span class="ed" style="background:var(--warn)"></span><div><div class="em"><b>Allowed (prompted)</b> registry write</div><div class="es">HKCU\\...\\Run ← Spotify.exe</div></div><time>6m</time></div>
+        <div class="ev-row"><span class="ed" style="background:var(--danger)"></span><div><div class="em"><b>Blocked</b> ransomware-like behaviour</div><div class="es">unknown.exe · 312 files in 4s → Documents</div></div><time>11m</time></div>
+        <div class="ev-row"><span class="ed" style="background:var(--accent)"></span><div><div class="em"><b>Scanned</b> file write · clean</div><div class="es">report.docx · MS Word</div></div><time>14m</time></div>
+      </div>
+    </div>
+
+    <div class="card pad-lg rise-3">
+      <div class="card-h"><h3>Controlled folder access</h3><span class="ch-sub">protected from untrusted apps</span>
+        <div class="ch-right"><button class="btn ghost sm">+ Add folder</button></div></div>
+      <div class="cf"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" style="width:16px;height:16px"><path d="M3 7h7l2 2h9v10H3z"/></svg><span class="fp">C:\\Users\\admin\\Documents</span><span class="pill ok" style="margin-left:auto;font-size:10px"><span class="dot"></span>protected</span></div>
+      <div class="cf"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" style="width:16px;height:16px"><path d="M3 7h7l2 2h9v10H3z"/></svg><span class="fp">C:\\Users\\admin\\Pictures</span><span class="pill ok" style="margin-left:auto;font-size:10px"><span class="dot"></span>protected</span></div>
+      <div class="cf"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" style="width:16px;height:16px"><path d="M3 7h7l2 2h9v10H3z"/></svg><span class="fp">D:\\Work</span><span class="pill ok" style="margin-left:auto;font-size:10px"><span class="dot"></span>protected</span></div>
+      <div class="divider"></div>
+      <div class="card-h"><h3 style="font-size:13px">Allowed apps</h3></div>
+      <div class="flex gap-8" style="flex-wrap:wrap">
+        <span class="pill muted">WINWORD.EXE</span><span class="pill muted">EXCEL.EXE</span>
+        <span class="pill muted">photoshop.exe</span><span class="pill muted">Code.exe</span>
+        <button class="chip" style="font-size:11px;padding:4px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--fg-2);cursor:pointer">+ allow app</button>
+      </div>
+    </div>
+  </div>
+
+<script src="js/shell.js"></script>
+<script>
+  document.addEventListener('click', function(e){
+    var t=e.target.closest('.toggle'); if(!t) return;
+    t.classList.toggle('off');
+    var shield=t.closest('.shield'); if(shield) shield.classList.toggle('off', t.classList.contains('off'));
+  });
+</script>
+</body>
+</html>

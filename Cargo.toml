@@ -1,0 +1,27 @@
+[workspace]
+members = [
+  "src-tauri",
+  "crates/aegis-common",
+  "crates/aegis-ipc",
+  "crates/aegis-db",
+  "crates/aegis-service",
+  "crates/aegis-update",
+  "crates/aegis-quarantine"
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://example.invalid/aegis-antivirus"
+
+[workspace.dependencies]
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde", "clock"] }
+rusqlite = { version = "0.31", features = ["bundled", "chrono", "uuid"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.39", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
+tracing = "0.1"
+uuid = { version = "1.10", features = ["serde", "v4"] }
