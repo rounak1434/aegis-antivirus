@@ -1,36 +1,36 @@
-import type { ReactNode } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { WinBar } from "./shell/WinBar";
+import { Sidebar } from "./shell/Sidebar";
+import { TopBar } from "./shell/TopBar";
+import { navItemByPath } from "./shell/nav";
 
-const navItems = ["Dashboard", "Scan Center", "Threat Center", "Quarantine", "Reports", "Settings"];
+/**
+ * Layout route. Reproduces the prototype's shell.js composition:
+ *   winbar + .app(has-winbar) [ sidebar | main( topbar + content ) ]
+ * Per-route title/crumb/wide come from the NAV metadata, replacing the
+ * prototype's per-page `data-*` attributes. Nested routes render into <Outlet>.
+ */
+export function AppShell() {
+  const { pathname } = useLocation();
+  const nav = navItemByPath(pathname);
+  const title = nav?.title ?? "Aegis";
+  const crumb = nav?.crumb;
+  const wide = nav?.wide ?? false;
 
-export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="grid h-screen grid-cols-[260px_1fr] bg-surface text-fg">
-      <aside className="border-r border-line bg-panel px-4 py-5">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg border border-accent/60 bg-accent/10 text-accent">A</div>
-          <div>
-            <div className="text-sm font-semibold tracking-[0.08em]">AEGIS</div>
-            <div className="text-xs text-muted">AegisService controlled</div>
+    <>
+      <WinBar />
+      <div className="app has-winbar">
+        <Sidebar />
+        <div className="main">
+          <TopBar title={title} crumb={crumb} />
+          <div className="content-scroll">
+            <div className={"content" + (wide ? " wide" : "")}>
+              <Outlet />
+            </div>
           </div>
         </div>
-        <nav className="space-y-1">
-          {navItems.map((item) => (
-            <button key={item} className="w-full rounded-md px-3 py-2 text-left text-sm text-muted transition hover:bg-surface hover:text-fg">
-              {item}
-            </button>
-          ))}
-        </nav>
-      </aside>
-      <main className="flex min-w-0 flex-col">
-        <header className="flex h-14 items-center justify-between border-b border-line px-6">
-          <div>
-            <div className="text-xs uppercase tracking-[0.08em] text-muted">Windows desktop antivirus</div>
-            <h1 className="text-lg font-semibold tracking-[-0.01em]">Aegis Antivirus</h1>
-          </div>
-          <div className="rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">UI connected through IPC</div>
-        </header>
-        <section className="min-h-0 flex-1 overflow-auto p-6">{children}</section>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

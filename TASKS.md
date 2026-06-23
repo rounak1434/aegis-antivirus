@@ -1,5 +1,38 @@
 # Aegis Antivirus Tasks
 
+## Prototype Migration (UI)
+
+### Phase A — Prototype Analysis
+- [x] Analyze every prototype page (index, dashboard, scan, threats, quarantine, realtime, settings, widget, architecture).
+- [x] Produce design token inventory, UI/component inventory, navigation map, screen map.
+- [x] Create `PROTOTYPE_AUDIT.md`.
+- [x] Identify that the prior `src/` React scaffold was a generic template diverging from the prototype.
+
+### Phase B — React Conversion
+- [x] Install `react-router-dom`.
+- [x] Port prototype design tokens into `src/styles.css` + `tailwind.config.ts`.
+- [x] Port prototype component classes (.card/.btn/.pill/.stat/.table/.toggle/…) verbatim.
+- [x] Create typed `<Icon>` component from `shell.js` icon map.
+- [x] Rebuild app shell: `WinBar`, grouped `Sidebar`, `TopBar`, `AppShell` layout route.
+- [x] Convert Dashboard screen with full visual parity (first vertical slice).
+- [x] Wire `HashRouter` with interim `SectionComingNext` for unconverted routes.
+- [x] Verify frontend build (`tsc && vite build`) passes.
+- [ ] Convert Scan Center screen (`src/features/scan-center`).
+- [ ] Convert Threat Center screen + evidence drawer (`src/features/threat-center`).
+- [ ] Convert Quarantine screen (`src/features/quarantine`).
+- [ ] Convert Real-time screen (`src/features/realtime`).
+- [ ] Convert Settings screen (`src/features/settings`).
+- [ ] Convert Launcher and Architecture pages.
+
+### Phase C — State Layer
+- [ ] Zustand stores: app, scan, threat, quarantine, settings, realtime.
+
+### Phase D — Backend Integration
+- [ ] Typed Tauri command interfaces: start/stop scan, progress, threats, quarantine, restore, settings.
+
+### Phase E — Production Polish
+- [ ] Loading / error / empty states, notifications, keyboard shortcuts, accessibility.
+
 ## Phase 1
 
 - [x] Analyze existing project directory.

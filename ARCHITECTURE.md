@@ -195,6 +195,33 @@ Elevated service context
     - owns SQLite writes
 ```
 
+## Frontend Implementation (Prototype Migration)
+
+The desktop UI is a faithful React conversion of the design prototype under
+`design-prototype/`, which is the **product specification** for all UI/UX. The
+prototype's visual system (Anthropic warm-dark palette, terracotta accent,
+serif display type) is preserved pixel-for-pixel.
+
+Layering:
+
+- `src/styles.css` — design tokens (`:root` CSS variables) + component classes
+  (`.card`, `.btn`, `.pill`, `.stat`, `.table`, `.toggle`, …) ported verbatim
+  from `design-prototype/css/app.css`. Single source of truth for parity.
+- `tailwind.config.ts` — mirrors the same tokens as Tailwind utilities.
+- `src/components/Icon.tsx` — typed icon set from the prototype's `shell.js`.
+- `src/components/shell/` — `WinBar`, `Sidebar`, `TopBar`, and the `nav.ts`
+  model (groups + per-route metadata), replacing `shell.js`'s DOM injection.
+- `src/components/AppShell.tsx` — layout route (winbar + sidebar + topbar +
+  `<Outlet>`), driven by `react-router-dom` (HashRouter for file/tauri origin).
+- `src/features/<screen>/` — one folder per prototype screen. Each holds the
+  component, co-located screen CSS, and typed seed data. Seed data is swapped
+  for Zustand stores (Phase C) and live IPC data (Phase D) without touching
+  the visual layer.
+
+Conversion is incremental and screen-by-screen; the Dashboard is the first
+fully converted screen. Unconverted routes render an interim, fully-functional
+`SectionComingNext` view inside the production shell.
+
 ## Phase 1 Exit Criteria
 
 - Documentation exists and reflects the service-owned architecture.

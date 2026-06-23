@@ -1,0 +1,50 @@
+/* Dashboard-specific styles, ported from design-prototype/dashboard.html's
+   <style> block. Namespaced under .dashboard-screen so page-specific class
+   names never collide with other converted screens. */
+
+.dashboard-screen .hero { display: grid; grid-template-columns: 300px 1fr; gap: 18px; }
+@media (max-width: 900px) { .dashboard-screen .hero { grid-template-columns: 1fr; } }
+
+.dashboard-screen .posture {
+  background:
+    radial-gradient(220px 180px at 50% 20%, var(--accent-wash), transparent 70%), var(--surface);
+  border: 1px solid var(--accent-dim); border-radius: var(--r-lg); padding: 24px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.dashboard-screen .ring { position: relative; width: 150px; height: 150px; margin: 4px 0 14px; }
+.dashboard-screen .ring svg { transform: rotate(-90deg); }
+.dashboard-screen .ring .center { position: absolute; inset: 0; display: grid; place-items: center; }
+.dashboard-screen .ring .center svg { transform: none; width: 46px; height: 46px; color: var(--accent); }
+.dashboard-screen .posture h2 { font-size: 19px; }
+.dashboard-screen .posture .ps { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+
+.dashboard-screen .scan-launch { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
+.dashboard-screen .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+@media (max-width: 720px) { .dashboard-screen .modes { grid-template-columns: repeat(2, 1fr); } }
+.dashboard-screen .mode {
+  text-align: left; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 13px; cursor: pointer; transition: border-color .12s, background .12s; color: inherit;
+}
+.dashboard-screen .mode:hover { border-color: var(--border-2); background: var(--surface-2); }
+.dashboard-screen .mode.sel { border-color: var(--accent); background: var(--accent-wash); }
+.dashboard-screen .mode svg { width: 18px; height: 18px; color: var(--accent); }
+.dashboard-screen .mode .mn { font-size: 13px; font-weight: 600; margin-top: 8px; }
+.dashboard-screen .mode .mm { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+.dashboard-screen .surface-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hairline); }
+.dashboard-screen .surface-row:last-child { border-bottom: 0; }
+.dashboard-screen .surface-row .si {
+  width: 32px; height: 32px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--border);
+  display: grid; place-items: center; flex: none;
+}
+.dashboard-screen .surface-row .si svg { width: 16px; height: 16px; color: var(--muted); }
+.dashboard-screen .surface-row .sn { font-size: 13px; font-weight: 550; }
+.dashboard-screen .surface-row .sd { font-size: 11.5px; color: var(--muted); }
+.dashboard-screen .surface-row .sv { margin-left: auto; text-align: right; }
+
+.dashboard-screen .act-item { display: flex; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--hairline); align-items: flex-start; }
+.dashboard-screen .act-item:last-child { border-bottom: 0; }
+.dashboard-screen .act-item .ad { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; }
+.dashboard-screen .act-item .at { font-size: 12.5px; }
+.dashboard-screen .act-item .as { font-size: 11px; color: var(--muted); }
+.dashboard-screen .act-item time { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); white-space: nowrap; }
