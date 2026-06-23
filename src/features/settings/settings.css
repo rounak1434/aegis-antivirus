@@ -1,0 +1,30 @@
+/* Settings styles, ported from design-prototype/settings.html <style>.
+   Namespaced under .settings-screen. The .toggle rules are shared with the
+   realtime screen (see realtime.css) and bundled globally by Vite. */
+
+.settings-screen .settings-layout { display: grid; grid-template-columns: 180px 1fr; gap: 22px; }
+@media (max-width: 760px) { .settings-screen .settings-layout { grid-template-columns: 1fr; } }
+.settings-screen .stabs { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 78px; align-self: start; }
+.settings-screen .stab { padding: 9px 12px; border-radius: var(--r-sm); font-size: 13px; color: var(--fg-2); cursor: pointer; font-weight: 500; border: 0; background: transparent; text-align: left; }
+.settings-screen .stab:hover { background: rgba(255, 255, 255, 0.04); color: var(--fg); }
+.settings-screen .stab.on { background: var(--surface-2); color: var(--fg); }
+.settings-screen .opt { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
+.settings-screen .opt:last-child { border-bottom: 0; }
+.settings-screen .opt .on-t { font-size: 13.5px; font-weight: 550; }
+.settings-screen .opt .on-s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.settings-screen select.sel-input {
+  background: var(--bg-2); border: 1px solid var(--border-2); color: var(--fg); border-radius: var(--r-sm);
+  padding: 7px 11px; font-size: 13px; font-family: inherit; margin-left: auto;
+}
+.settings-screen .update-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; }
+.settings-screen .upd-row { display: flex; align-items: center; gap: 14px; }
+.settings-screen .upd-row .ico { width: 44px; height: 44px; border-radius: 11px; background: var(--accent-wash); border: 1px solid var(--accent-dim); display: grid; place-items: center; flex: none; }
+.settings-screen .upd-row .ico svg { width: 22px; height: 22px; color: var(--accent); }
+.settings-screen .secure-list { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+.settings-screen .secure-list li { display: flex; gap: 9px; font-size: 12.5px; color: var(--fg-2); align-items: center; }
+.settings-screen .secure-list li svg { width: 15px; height: 15px; color: var(--accent); flex: none; }
+.settings-screen .excl-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--hairline); }
+.settings-screen .excl-row:last-child { border-bottom: 0; }
+.settings-screen .excl-row .fp { font-family: var(--font-mono); font-size: 12px; color: var(--fg-2); }
+.settings-screen .panel { display: none; }
+.settings-screen .panel.on { display: block; animation: rise .3s ease both; }

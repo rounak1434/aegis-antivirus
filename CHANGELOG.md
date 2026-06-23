@@ -2,6 +2,23 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Prototype Migration (Phase B: all core screens)
+
+### Added
+- Converted **Scan Center** (`features/scan-center`) — posture ring, per-engine
+  activity, current path, and a live detections feed driven by a self-contained
+  `useScanSimulation` hook (swappable for IPC ScanProgress events in Phase D).
+- Converted **Threat Center** (`features/threat-center`) — detections table,
+  severity/risk chips, filter chips, and the per-threat evidence drawer (risk
+  score, recommended action, file evidence, detection layers, reasons; Esc to close).
+- Converted **Quarantine** (`features/quarantine`) — encrypted-vault banner,
+  stats, bulk selection bar with select-all, and restore/delete (delete confirm).
+- Converted **Real-time** (`features/realtime`) — 6 shield cards with working
+  toggles, live event feed, controlled-folder access, allowed apps.
+- Converted **Settings** (`features/settings`) — sticky sub-tabs, engine/behaviour/
+  privacy toggles, exclusions, and the simulated signed signature-update flow.
+- Routed all five screens in the HashRouter shell.
+
 ## Unreleased - Prototype Migration (Phase A + B slice)
 
 ### Added

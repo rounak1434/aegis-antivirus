@@ -1,0 +1,46 @@
+/* Threat Center styles, ported from design-prototype/threats.html <style>.
+   Namespaced under .threats-screen (drawer is portaled to body but scoped via
+   its own ids/classes which are unique to this screen). */
+
+.threats-screen .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.threats-screen .chip {
+  font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--fg-2); cursor: pointer; font-weight: 500;
+}
+.threats-screen .chip.on { background: var(--surface-2); border-color: var(--border-2); color: var(--fg); }
+.threats-screen .chip .c { font-family: var(--font-mono); color: var(--faint); margin-left: 6px; }
+.threats-screen .name-cell { display: flex; flex-direction: column; gap: 2px; }
+.threats-screen .name-cell .tn { font-weight: 600; font-size: 13px; }
+.threats-screen .name-cell .tr { font-size: 11px; color: var(--muted); }
+
+/* drawer */
+.drawer-back {
+  position: fixed; inset: 0; background: rgba(5, 7, 11, 0.55); opacity: 0; pointer-events: none;
+  transition: opacity .2s; z-index: 80; backdrop-filter: blur(2px);
+}
+.drawer-back.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 92vw; background: var(--bg-2);
+  border-left: 1px solid var(--border); z-index: 90; transform: translateX(100%);
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1);
+  display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0, 0, 0, .4);
+}
+.drawer.open { transform: none; }
+.drawer-h { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.drawer-h .x { float: right; }
+.drawer-b { padding: 20px; overflow: auto; flex: 1; }
+.drawer-f { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 9px; }
+.ev { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 13px 15px; margin-bottom: 11px; }
+.ev .et { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
+.kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 10px; font-size: 12.5px; }
+.kv dt { color: var(--muted); }
+.kv dd { font-family: var(--font-mono); color: var(--fg-2); word-break: break-all; }
+.layer-hit { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 12.5px; }
+.layer-hit:last-child { border-bottom: 0; }
+.big-risk { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.big-risk .rn { font-family: var(--font-mono); font-size: 42px; font-weight: 600; line-height: 1; }
+.recommend {
+  background: var(--danger-wash); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  border-radius: var(--r); padding: 13px 15px; font-size: 12.5px; display: flex; gap: 10px;
+}
+.recommend svg { width: 17px; height: 17px; color: var(--danger); flex: none; margin-top: 1px; }

@@ -1,0 +1,47 @@
+/* Real-time styles, ported from design-prototype/realtime.html <style>.
+   Namespaced under .realtime-screen. */
+
+.realtime-screen .rt-banner {
+  display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 9px;
+  background: var(--accent-wash); border: 1px solid var(--accent-dim); margin-bottom: 16px;
+}
+.realtime-screen .rt-banner > svg { width: 22px; height: 22px; color: var(--accent); flex: none; }
+.realtime-screen .shield-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (max-width: 760px) { .realtime-screen .shield-grid { grid-template-columns: 1fr; } }
+.realtime-screen .shield { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
+.realtime-screen .shield .sh { display: flex; align-items: center; gap: 12px; }
+.realtime-screen .shield .ico {
+  width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; flex: none;
+  background: var(--accent-wash); border: 1px solid var(--accent-dim);
+}
+.realtime-screen .shield .ico svg { width: 19px; height: 19px; color: var(--accent); }
+.realtime-screen .shield.off .ico { background: rgba(255, 255, 255, 0.04); border-color: var(--border); }
+.realtime-screen .shield.off .ico svg { color: var(--faint); }
+.realtime-screen .shield .st { font-weight: 600; font-size: 13.5px; }
+.realtime-screen .shield .ss { font-size: 11.5px; color: var(--muted); }
+.realtime-screen .shield .desc { font-size: 12px; color: var(--fg-2); margin-top: 11px; line-height: 1.45; }
+
+/* toggle */
+.realtime-screen .toggle, .settings-screen .toggle {
+  margin-left: auto; width: 42px; height: 24px; border-radius: 14px; background: var(--accent);
+  position: relative; cursor: pointer; transition: background .15s; flex: none; border: 0;
+}
+.realtime-screen .toggle::after, .settings-screen .toggle::after {
+  content: ""; position: absolute; top: 3px; left: 21px; width: 18px; height: 18px; border-radius: 50%;
+  background: #1c1c1a; transition: left .15s;
+}
+.realtime-screen .toggle.off, .settings-screen .toggle.off { background: rgba(255, 255, 255, 0.12); }
+.realtime-screen .toggle.off::after, .settings-screen .toggle.off::after { left: 3px; background: var(--faint); }
+
+.realtime-screen .ev-row {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 11px 4px;
+  border-bottom: 1px solid var(--hairline);
+}
+.realtime-screen .ev-row:last-child { border-bottom: 0; }
+.realtime-screen .ev-row .ed { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.realtime-screen .ev-row .em { font-size: 12.5px; }
+.realtime-screen .ev-row .es { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.realtime-screen .ev-row time { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+.realtime-screen .cf { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+.realtime-screen .cf:last-child { border-bottom: 0; }
+.realtime-screen .cf .fp { font-family: var(--font-mono); font-size: 12px; color: var(--fg-2); }

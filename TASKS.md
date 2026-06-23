@@ -17,11 +17,11 @@
 - [x] Convert Dashboard screen with full visual parity (first vertical slice).
 - [x] Wire `HashRouter` with interim `SectionComingNext` for unconverted routes.
 - [x] Verify frontend build (`tsc && vite build`) passes.
-- [ ] Convert Scan Center screen (`src/features/scan-center`).
-- [ ] Convert Threat Center screen + evidence drawer (`src/features/threat-center`).
-- [ ] Convert Quarantine screen (`src/features/quarantine`).
-- [ ] Convert Real-time screen (`src/features/realtime`).
-- [ ] Convert Settings screen (`src/features/settings`).
+- [x] Convert Scan Center screen (`src/features/scan-center`) — live progress simulation hook.
+- [x] Convert Threat Center screen + evidence drawer (`src/features/threat-center`).
+- [x] Convert Quarantine screen (`src/features/quarantine`) — selection + delete confirm.
+- [x] Convert Real-time screen (`src/features/realtime`) — shield toggles + event feed.
+- [x] Convert Settings screen (`src/features/settings`) — sub-tabs + signed update flow.
 - [ ] Convert Launcher and Architecture pages.
 
 ### Phase C — State Layer
