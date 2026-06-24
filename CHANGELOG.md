@@ -2,6 +2,32 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 5: Windows Security Scanner — VERIFIED
+
+### Added
+- `aegis-windows` crate — Windows persistence scanner producing
+  `aegis_detect::ThreatDetection`s:
+  - collectors + pure parsers for startup folders, registry Run/RunOnce
+    (`winreg`), scheduled tasks (`schtasks` CSV), services (registry), drivers
+    (`driverquery` CSV), browser extensions (Chrome/Edge/Firefox), hosts file;
+  - `PersistenceEntry` / `PersistenceKind` model;
+  - heuristics: temp-dir executables, scripts in startup, unsigned binaries,
+    LOLBin command lines, encoded PowerShell, browser-extension sideloading,
+    hosts-file redirects (suspicious-only → no benign flooding);
+  - `WindowsScanner::scan_all()` / `analyze_entries()`.
+- `WINDOWS_SCANNER.md` — design, surfaces, heuristics, scoring, limitations.
+
+### Changed
+- `aegis-detect::ThreatEvidence` gained two additive variants (integration
+  requirement for the Windows scanner): `PersistenceMechanism` (+15) and
+  `SuspiciousLocation` (+20), with `weight`/`reason`/`label` arms.
+
+### Verified
+- `cargo test -p aegis-windows -p aegis-detect`: 39/39 pass (windows 20 unit +
+  3 integration; detect 16, unaffected by the new variants).
+- `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features
+  -- -D warnings`: clean.
+
 ## Unreleased - Phase 4: Quarantine System — VERIFIED
 
 ### Added

@@ -30,6 +30,13 @@ pub enum ThreatEvidence {
     ScriptIndicator { indicator: String },
     /// PowerShell abuse indicator found in content.
     PowerShellIndicator { indicator: String },
+    /// A Windows persistence mechanism (startup, registry Run key, scheduled
+    /// task, service, driver, browser extension, hosts file). Added in Phase 5
+    /// so the Windows scanner emits uniform `ThreatDetection`s.
+    PersistenceMechanism { mechanism: String, name: String, detail: String },
+    /// A file/command located somewhere suspicious (temp dir, startup folder,
+    /// unsigned binary, suspicious command line).
+    SuspiciousLocation { path: String, reason: String },
 }
 
 impl ThreatEvidence {
@@ -44,6 +51,8 @@ impl ThreatEvidence {
             ThreatEvidence::SuspiciousExtension { .. } => 15,
             ThreatEvidence::EntropyDetection { .. } => 15,
             ThreatEvidence::ScriptIndicator { .. } => 10,
+            ThreatEvidence::SuspiciousLocation { .. } => 20,
+            ThreatEvidence::PersistenceMechanism { .. } => 15,
         }
     }
 
@@ -76,6 +85,12 @@ impl ThreatEvidence {
             ThreatEvidence::PowerShellIndicator { indicator } => {
                 format!("PowerShell abuse indicator: {indicator}")
             }
+            ThreatEvidence::PersistenceMechanism { mechanism, name, detail } => {
+                format!("{mechanism} persistence '{name}': {detail}")
+            }
+            ThreatEvidence::SuspiciousLocation { path, reason } => {
+                format!("suspicious location: {path} ({reason})")
+            }
         }
     }
 
@@ -90,6 +105,8 @@ impl ThreatEvidence {
             ThreatEvidence::SuspiciousExtension { .. } => "suspicious_extension",
             ThreatEvidence::ScriptIndicator { .. } => "script_indicator",
             ThreatEvidence::PowerShellIndicator { .. } => "powershell_indicator",
+            ThreatEvidence::PersistenceMechanism { .. } => "persistence_mechanism",
+            ThreatEvidence::SuspiciousLocation { .. } => "suspicious_location",
         }
     }
 }

@@ -116,15 +116,24 @@
 - [x] `QUARANTINE_SYSTEM.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
 - [ ] Wire `Vault` into `aegis-service` (auto-quarantine high/critical detections).
 
-## Phase 4
+## Windows Security Scanner (`aegis-windows`) — VERIFIED ✓
 
-- [ ] Implement startup folder scanner.
-- [ ] Implement registry Run key scanner.
-- [ ] Implement scheduled task scanner.
-- [ ] Implement services scanner.
-- [ ] Implement drivers scanner.
-- [ ] Implement browser extension scanner.
-- [ ] Implement hosts file scanner.
+> Validated 2026-06-24: `cargo test -p aegis-windows` 23/23 pass (20 unit + 3
+> integration), `cargo clippy … -D warnings` clean. See `WINDOWS_SCANNER.md`.
+
+- [x] Startup folder scanner (`startup::scan_dir` + collector).
+- [x] Registry Run + RunOnce scanner (HKCU/HKLM via winreg).
+- [x] Scheduled task scanner (`schtasks` CSV parser).
+- [x] Services scanner (registry, type classification).
+- [x] Drivers scanner (`driverquery` CSV parser).
+- [x] Browser extension scanner (Chrome/Edge/Firefox).
+- [x] Hosts file scanner (`parse_hosts`).
+- [x] Heuristics: temp-exe, startup-script, unsigned, LOLBin command lines,
+      encoded PowerShell, extension sideload, hosts redirect.
+- [x] Findings → `ThreatDetection` (shared model + 2 additive evidence variants).
+- [x] Unit + integration tests with mock persistence fixtures.
+- [x] `WINDOWS_SCANNER.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Wire `WindowsScanner` into `aegis-service` scheduled persistence sweeps.
 
 ## Phase 5
 

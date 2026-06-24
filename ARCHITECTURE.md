@@ -118,11 +118,16 @@ Implemented engine crates:
   SHA-256 integrity-checked restore, path-traversal/overwrite guards, and full
   audit trail. Persists to `quarantine_records` + `audit_log`. See
   `QUARANTINE_SYSTEM.md`.
+- `aegis-windows` (Phase 5): Windows persistence scanner. Collectors for startup
+  folders, registry Run/RunOnce, scheduled tasks, services, drivers, browser
+  extensions (Chrome/Edge/Firefox), and the hosts file; heuristics (temp-exe,
+  startup-script, unsigned, LOLBin command lines, encoded PowerShell, extension
+  sideload, hosts redirect) → `ThreatDetection`. Pure parsers + best-effort
+  `cfg(windows)` collectors. See `WINDOWS_SCANNER.md`.
 
 Future crates:
 
 - `aegis-scan` (archive recursion limits — extends the above).
-- `aegis-windows`: registry, tasks, services, drivers, browser extensions, hosts scanner.
 - `aegis-realtime`: file/process monitoring and alert generation.
 - `aegis-reporting`: report rendering and export.
 

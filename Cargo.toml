@@ -8,6 +8,7 @@ members = [
   "crates/aegis-signatures",
   "crates/aegis-yara",
   "crates/aegis-detect",
+  "crates/aegis-windows",
   "crates/aegis-service",
   "crates/aegis-update",
   "crates/aegis-quarantine"
