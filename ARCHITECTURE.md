@@ -112,6 +112,12 @@ Implemented engine crates:
   extension, entropy/packing, script + PowerShell indicators), additive 0–100
   risk scoring with explainable evidence, and persistence to `detection_results`
   / `scan_events`. See `DETECTION_ENGINE.md`.
+- `aegis-quarantine` (Phase 4): AES-256-GCM encrypted vault. `Vault` with
+  `quarantine_file`/`quarantine_detection`/`restore_file`/`delete_file`/
+  `get_record`/`list_records`. Randomized `<uuid>.qbin` blobs, plaintext shred,
+  SHA-256 integrity-checked restore, path-traversal/overwrite guards, and full
+  audit trail. Persists to `quarantine_records` + `audit_log`. See
+  `QUARANTINE_SYSTEM.md`.
 
 Future crates:
 

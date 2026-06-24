@@ -2,6 +2,38 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 4: Quarantine System — VERIFIED
+
+### Added
+- `aegis-quarantine` built out into a secure vault (replacing the Phase-1
+  boundary skeleton):
+  - AES-256-GCM encryption at rest (`crypto::VaultKey`); on-disk format
+    `nonce || ciphertext+tag`; per-file random nonce; OS-CSPRNG 256-bit key
+    persisted as `vault.key`.
+  - `Vault` actions: `quarantine_file`, `quarantine_detection` (consumes
+    `aegis_detect::ThreatDetection`), `restore_file`, `delete_file`,
+    `get_record`, `list_records`.
+  - `QuarantineRecord` (id, original_path, quarantine_path, sha256, threat_level,
+    reason, timestamp, size, encrypted, status); randomized `<uuid>.qbin` blobs.
+  - Safety: SHA-256 integrity-checked restore, GCM tamper detection,
+    path-traversal + relative-path + overwrite guards, no double-restore.
+  - Plaintext original shredded (zero-overwrite) after isolation.
+  - Audit trail to `audit_log` (actor, action, subject, result).
+- DB migration `003_quarantine.sql`: `quarantine_records` (+ reuses `audit_log`).
+- Quarantine/restore/encryption benchmark (`benches/quarantine_bench.rs`).
+- `QUARANTINE_SYSTEM.md` — vault layout, crypto, safety, performance, limits.
+
+### Changed
+- `aegis-db::apply_migrations` now applies 001 → 002 → 003 (idempotent list).
+
+### Verified
+- `cargo test -p aegis-quarantine`: 14/14 pass.
+- `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features
+  -- -D warnings`: clean.
+- Benchmark (release, 1,000 × 64 KiB = 62.5 MiB): quarantine 505 files/s
+  (31.5 MiB/s), restore 541 files/s (33.8 MiB/s), AES-256-GCM 1,323.8 MiB/s
+  (encryption ≈ 2% of cost; disk I/O dominates).
+
 ## Unreleased - Phase 3: Detection Engine — VERIFIED
 
 ### Added

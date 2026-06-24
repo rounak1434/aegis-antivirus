@@ -1,34 +1,20 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+//! Aegis quarantine system.
+//!
+//! Receives malicious files (by path or [`aegis_detect::ThreatDetection`]) and
+//! safely isolates them in an AES-256-GCM-encrypted vault. Plaintext malware is
+//! never stored at rest. Every quarantine / restore / delete action is audited,
+//! and restores are integrity-checked (SHA-256) and path-validated.
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct QuarantineId(pub Uuid);
+mod crypto;
+mod db;
+mod model;
+mod vault;
 
-impl QuarantineId {
-    pub fn new() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
+pub use crypto::{CryptoError, VaultKey};
+pub use model::{
+    AuditAction, QuarantineError, QuarantineRecord, QuarantineStatus, ThreatLevel,
+};
+pub use vault::Vault;
 
-impl Default for QuarantineId {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct QuarantineRecord {
-    pub id: QuarantineId,
-    pub original_path: String,
-    pub vault_path: String,
-    pub sha256: String,
-    pub encrypted_size_bytes: u64,
-    pub quarantined_at_utc: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum QuarantineDecision {
-    Restore { id: QuarantineId, reason: String },
-    PermanentlyDelete { id: QuarantineId, reason: String },
-}
+// Low-level persistence is exposed for reporting/service integration.
+pub use db::{get_record, list_records, write_audit};

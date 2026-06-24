@@ -8,6 +8,7 @@ use thiserror::Error;
 const MIGRATIONS: &[(i64, &str, &str)] = &[
     (1, "001_initial", include_str!("../../../migrations/001_initial.sql")),
     (2, "002_detection", include_str!("../../../migrations/002_detection.sql")),
+    (3, "003_quarantine", include_str!("../../../migrations/003_quarantine.sql")),
 ];
 
 #[derive(Debug, Error)]

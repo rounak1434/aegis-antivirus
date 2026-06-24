@@ -99,6 +99,23 @@
 - [x] `DETECTION_ENGINE.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
 - [ ] Wire `aegis-detect` into `aegis-service` scan pipeline + IPC threat events.
 
+## Quarantine System (`aegis-quarantine`) — VERIFIED ✓
+
+> Validated 2026-06-24: `cargo test -p aegis-quarantine` 14/14 pass,
+> `cargo clippy … -D warnings` clean, benchmark 1k×64 KiB → quarantine 505 files/s,
+> restore 541 files/s, AES-256-GCM 1,323.8 MiB/s. See `QUARANTINE_SYSTEM.md`.
+
+- [x] Encrypted vault: AES-256-GCM, randomized `<uuid>.qbin`, collision-safe.
+- [x] `QuarantineRecord` model + SQLite (`quarantine_records`, migration 003).
+- [x] Actions: `quarantine_file`/`quarantine_detection`/`restore_file`/
+      `delete_file`/`get_record`/`list_records`.
+- [x] Safety: SHA-256 integrity check, path-traversal + overwrite guards,
+      status checks (no double-restore).
+- [x] Audit trail (`audit_log`): quarantine/restore/delete with actor + result.
+- [x] Unit + integration tests; quarantine/restore/encryption benchmark.
+- [x] `QUARANTINE_SYSTEM.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Wire `Vault` into `aegis-service` (auto-quarantine high/critical detections).
+
 ## Phase 4
 
 - [ ] Implement startup folder scanner.
