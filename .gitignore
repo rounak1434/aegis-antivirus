@@ -1,9 +1,45 @@
+# ---- Rust ----
 /target/
-/dist/
-/node_modules/
+**/target/
 /src-tauri/target/
+**/*.rs.bk
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# ---- Editors / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ---- Tauri generated ----
+/src-tauri/gen/
+
+# ---- Secrets & runtime security data (NEVER commit) ----
+vault.key
+**/vault.key
+data/
+data/quarantine/
+.env
+.env.*
+*.pem
+*.pfx
+*.p12
+
+# ---- Databases ----
 *.db
 *.db-shm
 *.db-wal
-.env
-.DS_Store
+*.sqlite
+*.sqlite3
+
+# ---- Build / test artifacts ----
+coverage/
+tmp/
+logs/
+*.log
