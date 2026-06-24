@@ -114,6 +114,23 @@ fn service_health_reports_components() {
 }
 
 #[test]
+fn realtime_start_stop_status() {
+    let (orch, _data, watch) = orchestrator();
+    use aegis_service::ProtectionMode;
+
+    assert!(!orch.get_realtime_status().running);
+    orch.start_realtime_with_paths(ProtectionMode::NotifyOnly, vec![watch.path().display().to_string()])
+        .unwrap();
+    let s = orch.get_realtime_status();
+    assert!(s.running);
+    assert_eq!(s.mode, ProtectionMode::NotifyOnly);
+    assert_eq!(s.watched_paths.len(), 1);
+
+    orch.stop_realtime().unwrap();
+    assert!(!orch.get_realtime_status().running);
+}
+
+#[test]
 fn stop_scan_cancels() {
     let (orch, _data, work) = orchestrator();
     for i in 0..200 {

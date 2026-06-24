@@ -2,6 +2,37 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 7: Real-Time Protection — VERIFIED
+
+### Added
+- `aegis-realtime` crate — monitors filesystem + process activity and feeds
+  events into the verified engines (no engine rewritten):
+  - file monitoring via `notify` (create/modify/rename, default user folders,
+    500 ms debounce);
+  - process monitoring via `sysinfo` (new-process diff: name, exe, command line);
+  - event pipeline: scan (`aegis-scan`) → detect (`aegis-detect`) →
+    policy → quarantine (`aegis-quarantine`);
+  - policies `MonitorOnly` / `NotifyOnly` (default) / `AutoQuarantine`;
+  - `RealtimeAlert` (timestamp, path, process, threat_level, score, action,
+    reason); `RealtimeEngine`, `RealtimeMonitor`, `Debouncer`.
+- DB migration `005_realtime.sql`: `realtime_events`, `realtime_alerts`.
+- Orchestrator RTP API: `start_realtime`, `start_realtime_with_paths`,
+  `stop_realtime`, `get_realtime_status` — runs in a background thread sharing
+  the orchestrator's signature/YARA/vault engines.
+- `aegis-realtime` benchmark (`benches/realtime_bench.rs`).
+- `REALTIME_PROTECTION.md` — pipeline, policies, performance, limitations.
+
+### Changed
+- `aegis-db::apply_migrations` now applies 001 → 005.
+
+### Verified
+- `cargo test -p aegis-realtime`: 14/14 pass (4 policy + 3 monitor unit +
+  7 integration). `cargo test -p aegis-service`: 11/11 (incl. RTP lifecycle).
+- `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features
+  -- -D warnings`: clean.
+- Benchmark (release, 2,000 file events): 864 events/s, 1,157 µs/event,
+  single-file scan 2,233 µs.
+
 ## Unreleased - Phase 6: Service Integration — VERIFIED
 
 ### Added

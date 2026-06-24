@@ -12,7 +12,7 @@ pub mod service;
 mod db;
 
 pub use jobs::{JobManager, JobState, JobStatus, JobType};
-pub use orchestrator::{AegisOrchestrator, ServiceConfig};
+pub use orchestrator::{AegisOrchestrator, ProtectionMode, RealtimeStatus, ServiceConfig};
 pub use service::status_service::{ComponentStatus, ServiceHealth};
 
 /// Errors surfaced by the service orchestration layer.

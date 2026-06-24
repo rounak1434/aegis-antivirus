@@ -150,13 +150,29 @@
 - [x] DB migration 004: service_events, job_history, service_state.
 - [x] Unit + integration + lifecycle + job-manager tests.
 - [x] `SERVICE_INTEGRATION.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
-## Phase 5
+## Real-Time Protection (`aegis-realtime`) — VERIFIED ✓
 
-- [ ] Implement file monitoring.
-- [ ] Implement process launch monitoring.
-- [ ] Add alert event pipeline.
+> Validated 2026-06-24: `cargo test -p aegis-realtime` 14/14 pass,
+> `cargo clippy … -D warnings` clean, benchmark 2k events → 864 events/s,
+> 1157 µs/event. See `REALTIME_PROTECTION.md`.
+
+- [x] File monitoring (`notify`): create/modify/rename, default folders, debounce.
+- [x] Process monitoring (`sysinfo`): new processes, cmdline, exe path.
+- [x] Event pipeline reusing scan → detect → quarantine (no engine rewrite).
+- [x] Policies: MonitorOnly / NotifyOnly (default) / AutoQuarantine.
+- [x] `RealtimeAlert` + DB migration 005 (realtime_events, realtime_alerts).
+- [x] Service integration: start/stop/status, background thread.
+- [x] Unit + integration + policy tests with mock events; benchmark.
+- [x] `REALTIME_PROTECTION.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+
+## Phase 5 (legacy roadmap — superseded by the sections above)
+
+- [x] Implement file monitoring.
+- [x] Implement process launch monitoring.
+- [x] Add alert event pipeline.
 - [ ] Add scheduled scan runner.
 
 ## Phase 6

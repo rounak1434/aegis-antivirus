@@ -9,6 +9,7 @@ members = [
   "crates/aegis-yara",
   "crates/aegis-detect",
   "crates/aegis-windows",
+  "crates/aegis-realtime",
   "crates/aegis-service",
   "crates/aegis-update",
   "crates/aegis-quarantine"
@@ -37,3 +38,5 @@ rayon = "1.10"
 yara-x = "1.19"
 aes-gcm = "0.10"
 rand = "0.8"
+notify = "6.1"
+sysinfo = "0.31"

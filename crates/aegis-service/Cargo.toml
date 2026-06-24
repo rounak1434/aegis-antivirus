@@ -22,6 +22,7 @@ aegis-yara = { path = "../aegis-yara" }
 aegis-detect = { path = "../aegis-detect" }
 aegis-quarantine = { path = "../aegis-quarantine" }
 aegis-windows = { path = "../aegis-windows" }
+aegis-realtime = { path = "../aegis-realtime" }
 anyhow = { workspace = true }
 chrono = { workspace = true }
 rusqlite = { workspace = true }

@@ -129,13 +129,18 @@ Implemented engine crates:
   execution, quarantine actions, Windows persistence scans, background jobs
   (`JobManager`), service health, and the IPC contract surface. Per-engine
   adapters wrap the verified crates; the UI reaches engines only through here.
-  Persists service events / job history / state (migration 004). See
-  `SERVICE_INTEGRATION.md`.
+  Persists service events / job history / state (migration 004). Also owns
+  real-time protection (`start_realtime` / `stop_realtime` /
+  `get_realtime_status`). See `SERVICE_INTEGRATION.md`.
+- `aegis-realtime` (Phase 7): real-time protection. Watches folders (`notify`)
+  and new processes (`sysinfo`), debounces, and feeds events into the verified
+  engines (scan → detect → quarantine). Policy modes (monitor / notify /
+  auto-quarantine), `RealtimeAlert`s, and persistence (migration 005). Runs in a
+  background thread under the orchestrator. See `REALTIME_PROTECTION.md`.
 
 Future crates:
 
 - `aegis-scan` (archive recursion limits — extends the above).
-- `aegis-realtime`: file/process monitoring and alert generation.
 - `aegis-reporting`: report rendering and export.
 
 ## 4. Database Layer

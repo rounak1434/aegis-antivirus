@@ -1,0 +1,31 @@
+[package]
+name = "aegis-realtime"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+aegis-common = { path = "../aegis-common" }
+aegis-db = { path = "../aegis-db" }
+aegis-scan = { path = "../aegis-scan" }
+aegis-detect = { path = "../aegis-detect" }
+aegis-signatures = { path = "../aegis-signatures" }
+aegis-yara = { path = "../aegis-yara" }
+aegis-quarantine = { path = "../aegis-quarantine" }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+rusqlite = { workspace = true }
+notify = { workspace = true }
+sysinfo = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.10"
+aegis-db = { path = "../aegis-db" }
+sha2 = { workspace = true }
+
+[[bench]]
+name = "realtime_bench"
+harness = false

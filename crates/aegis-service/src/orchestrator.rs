@@ -32,6 +32,13 @@ impl ServiceConfig {
     }
 }
 
+pub use aegis_realtime::{ProtectionMode, RealtimeStatus};
+
+struct RealtimeState {
+    engine: aegis_realtime::RealtimeEngine,
+    monitor: aegis_realtime::RealtimeMonitor,
+}
+
 /// Central orchestrator. Cheap to clone-share via the inner `Arc`s.
 pub struct AegisOrchestrator {
     db_path: PathBuf,
@@ -39,6 +46,7 @@ pub struct AegisOrchestrator {
     yara: Arc<Mutex<RuleManager>>,
     vault: Arc<Mutex<Vault>>,
     jobs: JobManager,
+    realtime: Mutex<Option<RealtimeState>>,
 }
 
 impl AegisOrchestrator {
@@ -65,6 +73,7 @@ impl AegisOrchestrator {
             yara: Arc::new(Mutex::new(RuleManager::new())),
             vault: Arc::new(Mutex::new(vault)),
             jobs: JobManager::new(),
+            realtime: Mutex::new(None),
         })
     }
 
@@ -229,6 +238,65 @@ impl AegisOrchestrator {
         let conn = self.conn()?;
         DetectionService::new().persist(&conn, &detections)?;
         Ok(detections)
+    }
+
+    // ---- IPC contract: real-time protection -----------------------------
+
+    /// Start RTP watching the default user folders.
+    pub fn start_realtime(&self, mode: ProtectionMode) -> Result<()> {
+        self.start_realtime_with_paths(mode, aegis_realtime::default_watched_paths())
+    }
+
+    /// Start RTP watching an explicit set of folders (test seam / custom config).
+    pub fn start_realtime_with_paths(&self, mode: ProtectionMode, paths: Vec<String>) -> Result<()> {
+        let mut guard = self.realtime.lock().unwrap();
+        if guard.as_ref().map(|r| r.monitor.is_running()).unwrap_or(false) {
+            return Ok(()); // already running
+        }
+        let engine = aegis_realtime::RealtimeEngine::new(
+            self.signatures.clone(),
+            self.yara.clone(),
+            self.vault.clone(),
+            self.db_path.clone(),
+            mode,
+        );
+        let mut monitor = aegis_realtime::RealtimeMonitor::new(engine.clone(), paths);
+        monitor.start();
+        *guard = Some(RealtimeState { engine, monitor });
+        if let Ok(conn) = self.conn() {
+            let _ = db::record_event(&conn, "realtime_started", &serde_json::json!({ "mode": mode }));
+        }
+        Ok(())
+    }
+
+    /// Stop RTP if running.
+    pub fn stop_realtime(&self) -> Result<()> {
+        if let Some(mut state) = self.realtime.lock().unwrap().take() {
+            state.monitor.stop();
+            if let Ok(conn) = self.conn() {
+                let _ = db::record_event(&conn, "realtime_stopped", &serde_json::json!({}));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_realtime_status(&self) -> RealtimeStatus {
+        match &*self.realtime.lock().unwrap() {
+            Some(state) => RealtimeStatus {
+                running: state.monitor.is_running(),
+                mode: state.engine.mode(),
+                watched_paths: state.monitor.watched_paths().to_vec(),
+                events_processed: state.engine.events_processed(),
+                alerts_raised: state.engine.alerts_raised(),
+            },
+            None => RealtimeStatus {
+                running: false,
+                mode: ProtectionMode::default(),
+                watched_paths: vec![],
+                events_processed: 0,
+                alerts_raised: 0,
+            },
+        }
     }
 
     // ---- IPC contract: health -------------------------------------------
