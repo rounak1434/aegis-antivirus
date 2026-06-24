@@ -2,6 +2,34 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 2: File Scanner (`aegis-scan`) — VERIFIED
+
+### Added
+- Live scan metrics on `ScanProgress` (`total_files`, `percent`, `elapsed_ms`,
+  `files_per_sec`, `bytes_per_sec`, `eta_ms`) and aggregate throughput on
+  `ScanReport` (`files_per_sec`, `bytes_per_sec`).
+- Integration test suite (`tests/integration.rs`): nested directories, hidden
+  files, symlink handling, permission-denied paths, large-file hashing, scan
+  cancellation, and progress-metric reporting.
+- Throughput benchmark example (`examples/bench.rs`).
+- `SCANNER_VALIDATION.md` — environment, test/clippy/benchmark evidence,
+  ETA method, and limitations.
+
+### Changed
+- `hex()` digest formatting rewritten without per-byte `format!` (clippy-clean,
+  faster).
+- `aegis-service::runtime::subscribe_status` annotated `#[allow(dead_code)]`
+  (IPC API consumed in a later phase) to keep `clippy -D warnings` clean.
+
+### Verified
+- `cargo test -p aegis-scan`: 12/12 pass. `cargo clippy --workspace --exclude
+  aegis-tauri --all-targets --all-features -- -D warnings`: clean. Benchmark:
+  4,000 files / 62.5 MiB in 133 ms → 29,981 files/s · 468.5 MiB/s (8 threads).
+
+### Known gaps (not scanner)
+- `aegis-tauri` build needs `icons/icon.ico` (Phase 12 packaging asset);
+  excluded from the workspace clippy gate until icons land.
+
 ## Unreleased - Prototype Migration (Phase B: all core screens)
 
 ### Added

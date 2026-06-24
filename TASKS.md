@@ -57,14 +57,28 @@
 - [x] Add UI-to-service IPC bridge contract.
 - [x] Document Rust installation requirement if local Cargo is unavailable.
 
-## Phase 2
+## Phase 2 — File Scanner (`aegis-scan`)  — VERIFIED ✓
 
-- [ ] Implement scan job model.
-- [ ] Implement scan mode planner.
-- [ ] Implement filesystem traversal.
-- [ ] Add scan cancellation.
-- [ ] Add progress event stream.
-- [ ] Add scanner fixture tests.
+> Validated 2026-06-24 on MSVC toolchain: `cargo test -p aegis-scan` 12/12 pass,
+> `cargo clippy … -D warnings` clean, benchmark 29,981 files/s · 468.5 MiB/s.
+> Evidence in `SCANNER_VALIDATION.md`.
+
+- [x] Add `aegis-scan` crate to the workspace (sha2, md-5, walkdir, rayon).
+- [x] Scan mode planner (`ScanOptions::for_mode` — Quick/Full/Deep/Custom presets).
+- [x] Recursive filesystem traversal (walkdir) with max-depth.
+- [x] Hidden/system file handling (Windows attribute flags, dotfile fallback).
+- [x] Symlink handling (follow vs skip; symlinks not hashed).
+- [x] Streaming SHA-256 + MD5 hashing (64 KiB buffer).
+- [x] File metadata collection (size, modified UTC, hidden, symlink).
+- [x] Multi-threaded hashing (rayon) with atomic progress counters.
+- [x] Cooperative cancellation + progress callback.
+- [x] Scanner unit + integration tests written (known-hash, counts, max-depth,
+      nested, hidden, symlink, permission-denied, large-file, cancel, metrics).
+- [x] Throughput benchmark example written (`examples/bench.rs`).
+- [x] Live metrics: throughput, file/byte counts, ETA, duration tracking.
+- [x] **VERIFY**: `cargo test -p aegis-scan` (12/12), `cargo clippy -D warnings`
+      (clean), benchmark (29,981 files/s · 468.5 MiB/s) — see SCANNER_VALIDATION.md.
+- [ ] Wire `aegis-scan` into `aegis-service` runtime + IPC progress events.
 
 ## Phase 3
 

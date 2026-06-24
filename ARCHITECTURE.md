@@ -96,9 +96,18 @@ Initial crates:
 - `aegis-update`: signed update metadata types and update planning boundary.
 - `aegis-quarantine`: quarantine command/result types and vault boundary.
 
+Implemented engine crates:
+
+- `aegis-scan`: filesystem traversal + scan jobs. Owns `ScanOptions`
+  (Quick/Full/Deep/Custom presets controlling depth, hidden/system inclusion,
+  and symlink following), streaming SHA-256 + MD5 hashing, `FileMetadata`
+  collection, multi-threaded hashing via rayon with atomic progress counters,
+  a progress callback, and cooperative cancellation. Filesystem-only and
+  platform-aware (Windows hidden/system attribute detection behind `cfg`).
+
 Future crates:
 
-- `aegis-scan`: file traversal, scan jobs, archive recursion limits.
+- `aegis-scan` (archive recursion limits — extends the above).
 - `aegis-yara`: YARA-X compilation, loading, and execution.
 - `aegis-heuristics`: entropy, suspicious extensions, obfuscation, script indicators.
 - `aegis-windows`: registry, tasks, services, drivers, browser extensions, hosts scanner.

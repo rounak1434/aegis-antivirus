@@ -4,6 +4,7 @@ members = [
   "crates/aegis-common",
   "crates/aegis-ipc",
   "crates/aegis-db",
+  "crates/aegis-scan",
   "crates/aegis-service",
   "crates/aegis-update",
   "crates/aegis-quarantine"
@@ -25,3 +26,7 @@ thiserror = "1.0"
 tokio = { version = "1.39", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
 tracing = "0.1"
 uuid = { version = "1.10", features = ["serde", "v4"] }
+sha2 = "0.10"
+md-5 = "0.10"
+walkdir = "2.5"
+rayon = "1.10"

@@ -19,6 +19,9 @@ impl AegisServiceRuntime {
         Self { status_tx }
     }
 
+    /// Status broadcast subscription for IPC consumers. Consumed once the
+    /// service IPC server is wired up (later phase); kept on the public API.
+    #[allow(dead_code)]
     pub fn subscribe_status(&self) -> watch::Receiver<ProtectionStatus> {
         self.status_tx.subscribe()
     }
