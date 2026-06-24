@@ -2,6 +2,38 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 6: Service Integration — VERIFIED
+
+### Added
+- `aegis-service` is now the **central orchestrator**. Split into a library
+  (`AegisOrchestrator`) plus the existing Windows-service binary.
+- Per-engine adapters under `service/`: `scan_service`, `detection_service`,
+  `quarantine_service`, `windows_service`, `status_service` — thin wrappers over
+  the verified engine crates (no engine logic changed).
+- Orchestrator IPC contract: `start_scan`, `stop_scan`, `get_scan_status`,
+  `list_jobs`, `get_threats`, `quarantine_detection`, `restore_file`,
+  `delete_quarantine_item`, `list_quarantine`, `run_windows_scan`,
+  `get_service_health`.
+- `JobManager` — thread-safe background jobs (queued → running →
+  completed/cancelled/failed) with live `ScanProgress`, cooperative
+  cancellation, and `job_history` persistence.
+- `ServiceHealth` / `ComponentStatus` — scanner / database / rules / quarantine
+  status with worst-component `overall`.
+- DB migration `004_service.sql`: `service_events`, `job_history`,
+  `service_state`.
+- `SERVICE_INTEGRATION.md` — orchestrator design, data flow, contract, jobs.
+
+### Changed
+- `aegis-db::apply_migrations` now applies 001 → 004.
+- `aegis-service` gained a `[lib]` + `[[bin]]`; `runtime` moved into the library;
+  the binary host now drives the library.
+
+### Verified
+- `cargo test -p aegis-service`: 10/10 pass (4 job-manager + 1 health unit +
+  5 integration/lifecycle). Full workspace suite green.
+- `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features
+  -- -D warnings`: clean.
+
 ## Unreleased - Phase 5: Windows Security Scanner — VERIFIED
 
 ### Added

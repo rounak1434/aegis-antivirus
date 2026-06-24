@@ -1,4 +1,4 @@
-use crate::runtime::AegisServiceRuntime;
+use aegis_service::runtime::AegisServiceRuntime;
 use aegis_common::SERVICE_NAME;
 use std::ffi::OsString;
 use std::sync::mpsc;

@@ -111,14 +111,27 @@ dependencies = [
 
 [[package]]
 name = "aegis-service"
-version = "0.1.0-phase1"
+version = "0.1.0"
 dependencies = [
  "aegis-common",
  "aegis-db",
+ "aegis-detect",
  "aegis-ipc",
+ "aegis-quarantine",
+ "aegis-scan",
+ "aegis-signatures",
+ "aegis-windows",
+ "aegis-yara",
  "anyhow",
+ "chrono",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "uuid",
  "windows-service",
 ]
 

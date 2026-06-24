@@ -133,7 +133,24 @@
 - [x] Findings → `ThreatDetection` (shared model + 2 additive evidence variants).
 - [x] Unit + integration tests with mock persistence fixtures.
 - [x] `WINDOWS_SCANNER.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
-- [ ] Wire `WindowsScanner` into `aegis-service` scheduled persistence sweeps.
+- [x] Wire `WindowsScanner` into `aegis-service` (`run_windows_scan`).
+
+## Service Integration (`aegis-service` orchestrator) — VERIFIED ✓
+
+> Validated 2026-06-24: `cargo test -p aegis-service` 10/10 pass,
+> `cargo clippy … -D warnings` clean. See `SERVICE_INTEGRATION.md`.
+
+- [x] `aegis-service` split into library (`AegisOrchestrator`) + service binary.
+- [x] Per-engine adapters: scan / detection / quarantine / windows / status.
+- [x] IPC contract: start_scan, stop_scan, get_scan_status, get_threats,
+      quarantine_detection, restore_file, delete_quarantine_item,
+      run_windows_scan, get_service_health.
+- [x] Background `JobManager`: queued/running/cancel/status, job history.
+- [x] Service health: scanner / database / rules / quarantine + overall.
+- [x] DB migration 004: service_events, job_history, service_state.
+- [x] Unit + integration + lifecycle + job-manager tests.
+- [x] `SERVICE_INTEGRATION.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
 ## Phase 5
 

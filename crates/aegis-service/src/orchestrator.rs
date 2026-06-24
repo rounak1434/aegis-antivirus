@@ -1,0 +1,261 @@
+//! `AegisOrchestrator` — the single entry point every engine is reached through.
+
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+
+use aegis_detect::{HashAlgo, SignatureDatabase, ThreatDetection};
+use aegis_quarantine::{QuarantineRecord, Vault};
+use aegis_scan::ScanOptions;
+use aegis_yara::RuleManager;
+use rusqlite::Connection;
+
+use crate::db;
+use crate::jobs::{JobManager, JobState, JobType};
+use crate::service::detection_service::DetectionService;
+use crate::service::quarantine_service::QuarantineService;
+use crate::service::scan_service::ScanService;
+use crate::service::status_service::{ComponentStatus, ServiceHealth};
+use crate::service::windows_service::WindowsSecurityService;
+use crate::{Result, ServiceError};
+
+pub use aegis_common::ScanMode;
+
+/// Where the service keeps its data.
+#[derive(Debug, Clone)]
+pub struct ServiceConfig {
+    pub data_dir: PathBuf,
+}
+
+impl ServiceConfig {
+    pub fn new(data_dir: impl Into<PathBuf>) -> Self {
+        Self { data_dir: data_dir.into() }
+    }
+}
+
+/// Central orchestrator. Cheap to clone-share via the inner `Arc`s.
+pub struct AegisOrchestrator {
+    db_path: PathBuf,
+    signatures: Arc<Mutex<SignatureDatabase>>,
+    yara: Arc<Mutex<RuleManager>>,
+    vault: Arc<Mutex<Vault>>,
+    jobs: JobManager,
+}
+
+impl AegisOrchestrator {
+    /// Initialize storage (DB + migrations + vault) under `config.data_dir`.
+    pub fn new(config: &ServiceConfig) -> Result<Self> {
+        std::fs::create_dir_all(&config.data_dir)?;
+        let db_path = config.data_dir.join("aegis.db");
+
+        let mut conn = aegis_db::open_database(&db_path)?;
+        aegis_db::apply_migrations(&mut conn)?;
+        db::record_event(&conn, "service_started", &serde_json::json!({}))?;
+        db::set_state(
+            &conn,
+            "service",
+            &serde_json::json!({ "version": env!("CARGO_PKG_VERSION"), "data_dir": config.data_dir.display().to_string() }),
+        )?;
+
+        let vault_conn = aegis_db::open_database(&db_path)?;
+        let vault = Vault::open(config.data_dir.join("quarantine"), vault_conn)?;
+
+        Ok(Self {
+            db_path,
+            signatures: Arc::new(Mutex::new(SignatureDatabase::new())),
+            yara: Arc::new(Mutex::new(RuleManager::new())),
+            vault: Arc::new(Mutex::new(vault)),
+            jobs: JobManager::new(),
+        })
+    }
+
+    fn conn(&self) -> Result<Connection> {
+        Ok(aegis_db::open_database(&self.db_path)?)
+    }
+
+    // ---- signature / rule management ------------------------------------
+
+    pub fn add_signature_sha256(&self, hex: &str) {
+        self.signatures.lock().unwrap().insert(HashAlgo::Sha256, hex);
+    }
+
+    pub fn load_signature_file(&self, path: impl AsRef<Path>) -> Result<usize> {
+        self.signatures
+            .lock()
+            .unwrap()
+            .load_file(path)
+            .map_err(|e| ServiceError::Other(e.to_string()))
+    }
+
+    pub fn add_yara_rule(&self, origin: &str, source: &str) -> Result<()> {
+        let mut mgr = self.yara.lock().unwrap();
+        mgr.add_source(origin, source);
+        mgr.compile_rules()?;
+        Ok(())
+    }
+
+    // ---- IPC contract: scanning -----------------------------------------
+
+    /// Queue a file scan; returns the job id immediately. The scan runs on a
+    /// background thread and feeds detection + persistence on completion.
+    pub fn start_scan(&self, roots: Vec<PathBuf>, mode: ScanMode) -> Result<String> {
+        let root_strs: Vec<String> = roots.iter().map(|p| p.display().to_string()).collect();
+        let (id, cancel) = self.jobs.create(JobType::FileScan, root_strs);
+
+        if let Ok(conn) = self.conn() {
+            let _ = db::upsert_job(&conn, &self.jobs.get(&id).unwrap());
+            let _ = db::record_event(&conn, "scan_queued", &serde_json::json!({ "job": id }));
+        }
+
+        let jobs = self.jobs.clone();
+        let signatures = self.signatures.clone();
+        let yara = self.yara.clone();
+        let db_path = self.db_path.clone();
+        let job_id = id.clone();
+
+        std::thread::spawn(move || {
+            jobs.mark_running(&job_id);
+            let opts = ScanOptions::for_mode(mode, roots);
+            let progress_jobs = jobs.clone();
+            let progress_id = job_id.clone();
+            let result = ScanService::new().run(&opts, cancel, move |p| {
+                progress_jobs.update_progress(&progress_id, p);
+            });
+
+            match result {
+                Ok(report) => {
+                    let detections = {
+                        let sig = signatures.lock().unwrap();
+                        let yara = yara.lock().unwrap();
+                        let yara_ref = if yara.is_compiled() { Some(&*yara) } else { None };
+                        DetectionService::new().analyze(&report, &sig, yara_ref)
+                    };
+                    if let Ok(conn) = aegis_db::open_database(&db_path) {
+                        let _ = DetectionService::new().persist(&conn, &detections);
+                        jobs.complete(&job_id, report.files_scanned, detections.len() as u32);
+                        let _ = db::upsert_job(&conn, &jobs.get(&job_id).unwrap());
+                        let _ = db::record_event(
+                            &conn,
+                            "scan_completed",
+                            &serde_json::json!({ "job": job_id, "threats": detections.len() }),
+                        );
+                    } else {
+                        jobs.complete(&job_id, report.files_scanned, detections.len() as u32);
+                    }
+                }
+                Err(aegis_scan::ScanError::Cancelled) => {
+                    // Status already 'cancelled' via stop_scan; just stamp history.
+                    if let Ok(conn) = aegis_db::open_database(&db_path) {
+                        let _ = db::upsert_job(&conn, &jobs.get(&job_id).unwrap());
+                    }
+                }
+                Err(e) => {
+                    jobs.fail(&job_id, e.to_string());
+                    if let Ok(conn) = aegis_db::open_database(&db_path) {
+                        let _ = db::upsert_job(&conn, &jobs.get(&job_id).unwrap());
+                    }
+                }
+            }
+        });
+
+        Ok(id)
+    }
+
+    /// Request cancellation of a running/queued scan.
+    pub fn stop_scan(&self, job_id: &str) -> Result<bool> {
+        let cancelled = self.jobs.cancel(job_id);
+        if cancelled {
+            if let Ok(conn) = self.conn() {
+                let _ = db::record_event(&conn, "scan_cancelled", &serde_json::json!({ "job": job_id }));
+            }
+        }
+        Ok(cancelled)
+    }
+
+    pub fn get_scan_status(&self, job_id: &str) -> Option<JobState> {
+        self.jobs.get(job_id)
+    }
+
+    pub fn list_jobs(&self) -> Vec<JobState> {
+        self.jobs.list()
+    }
+
+    // ---- IPC contract: threats ------------------------------------------
+
+    pub fn get_threats(&self) -> Result<Vec<ThreatDetection>> {
+        let conn = self.conn()?;
+        db::list_detections(&conn, 500)
+    }
+
+    // ---- IPC contract: quarantine ---------------------------------------
+
+    pub fn quarantine_detection(&self, detection: &ThreatDetection, actor: &str) -> Result<QuarantineRecord> {
+        let vault = self.vault.lock().unwrap();
+        QuarantineService::quarantine(&vault, detection, actor)
+    }
+
+    pub fn restore_file(&self, id: &str, dest: Option<&Path>, actor: &str) -> Result<String> {
+        let vault = self.vault.lock().unwrap();
+        QuarantineService::restore(&vault, id, dest, actor)
+    }
+
+    pub fn delete_quarantine_item(&self, id: &str, actor: &str) -> Result<()> {
+        let vault = self.vault.lock().unwrap();
+        QuarantineService::delete(&vault, id, actor)
+    }
+
+    pub fn list_quarantine(&self) -> Result<Vec<QuarantineRecord>> {
+        let vault = self.vault.lock().unwrap();
+        QuarantineService::list(&vault)
+    }
+
+    // ---- IPC contract: windows scan -------------------------------------
+
+    /// Run a Windows persistence sweep synchronously; persist + return findings.
+    pub fn run_windows_scan(&self) -> Result<Vec<ThreatDetection>> {
+        let (id, _cancel) = self.jobs.create(JobType::WindowsScan, vec![]);
+        self.jobs.mark_running(&id);
+        let detections = WindowsSecurityService::new().run();
+        let conn = self.conn()?;
+        DetectionService::new().persist(&conn, &detections)?;
+        self.jobs.complete(&id, 0, detections.len() as u32);
+        db::upsert_job(&conn, &self.jobs.get(&id).unwrap())?;
+        db::record_event(&conn, "windows_scan_completed", &serde_json::json!({ "threats": detections.len() }))?;
+        Ok(detections)
+    }
+
+    /// Analyze caller-supplied persistence entries (test seam / future RTP feed).
+    pub fn analyze_windows_entries(&self, entries: &[aegis_windows::PersistenceEntry]) -> Result<Vec<ThreatDetection>> {
+        let detections = WindowsSecurityService::new().analyze(entries);
+        let conn = self.conn()?;
+        DetectionService::new().persist(&conn, &detections)?;
+        Ok(detections)
+    }
+
+    // ---- IPC contract: health -------------------------------------------
+
+    pub fn get_service_health(&self) -> ServiceHealth {
+        let database = match self.conn().and_then(|c| db::count_detections(&c)) {
+            Ok(_) => ComponentStatus::Ok,
+            Err(_) => ComponentStatus::Unavailable,
+        };
+        let rules = {
+            let mgr = self.yara.lock().unwrap();
+            if mgr.is_compiled() && mgr.source_count() > 0 {
+                ComponentStatus::Ok
+            } else {
+                ComponentStatus::Degraded // hash + heuristics still operate
+            }
+        };
+        let quarantine = match self.vault.lock().unwrap().list_records() {
+            Ok(_) => ComponentStatus::Ok,
+            Err(_) => ComponentStatus::Degraded,
+        };
+        let active_jobs = self
+            .jobs
+            .list()
+            .iter()
+            .filter(|j| !j.status.is_terminal())
+            .count();
+        ServiceHealth::compute(ComponentStatus::Ok, database, rules, quarantine, active_jobs)
+    }
+}

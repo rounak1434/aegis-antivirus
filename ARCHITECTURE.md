@@ -124,6 +124,13 @@ Implemented engine crates:
   startup-script, unsigned, LOLBin command lines, encoded PowerShell, extension
   sideload, hosts redirect) → `ThreatDetection`. Pure parsers + best-effort
   `cfg(windows)` collectors. See `WINDOWS_SCANNER.md`.
+- `aegis-service` (Phase 6): the **central orchestrator**. Library
+  (`AegisOrchestrator`) + Windows-service binary. Owns scan requests, detection
+  execution, quarantine actions, Windows persistence scans, background jobs
+  (`JobManager`), service health, and the IPC contract surface. Per-engine
+  adapters wrap the verified crates; the UI reaches engines only through here.
+  Persists service events / job history / state (migration 004). See
+  `SERVICE_INTEGRATION.md`.
 
 Future crates:
 

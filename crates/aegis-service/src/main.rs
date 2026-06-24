@@ -1,5 +1,5 @@
-mod runtime;
-
+// The service runtime + orchestrator live in the `aegis_service` library; this
+// binary is the thin Windows-service host that drives them.
 #[cfg(windows)]
 mod windows_host;
 

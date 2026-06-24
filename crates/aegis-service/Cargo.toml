@@ -1,16 +1,39 @@
 [package]
 name = "aegis-service"
-version = "0.1.0-phase1"
+version = "0.1.0"
 edition.workspace = true
 license.workspace = true
+
+[lib]
+name = "aegis_service"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aegis-service"
+path = "src/main.rs"
 
 [dependencies]
 aegis-common = { path = "../aegis-common" }
 aegis-db = { path = "../aegis-db" }
 aegis-ipc = { path = "../aegis-ipc" }
-anyhow.workspace = true
-tokio.workspace = true
-tracing.workspace = true
+aegis-scan = { path = "../aegis-scan" }
+aegis-signatures = { path = "../aegis-signatures" }
+aegis-yara = { path = "../aegis-yara" }
+aegis-detect = { path = "../aegis-detect" }
+aegis-quarantine = { path = "../aegis-quarantine" }
+aegis-windows = { path = "../aegis-windows" }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.7"
+
+[dev-dependencies]
+tempfile = "3.10"
