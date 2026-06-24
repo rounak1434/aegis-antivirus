@@ -2,6 +2,44 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 3: Detection Engine — VERIFIED
+
+### Added
+- `aegis-signatures` crate — `SignatureDatabase` for SHA-256/MD5 known-bad
+  hashes: SQLite + local-file sources + in-memory cache, `load`/`reload`/
+  `contains_sha256`/`contains_md5`.
+- `aegis-yara` crate — `RuleManager` over YARA-X 1.19: load (dir/strings),
+  validate, compile, cache compiled `Rules`, reload, and `scan_file`/`scan_bytes`.
+- `aegis-detect` crate — detection engine above scanner output:
+  - threat model: `ThreatLevel`, `ThreatEvidence` (8 variants), `ThreatDetection`;
+  - heuristics: double extension, suspicious extension, Shannon entropy /
+    packed-executable, script indicators, PowerShell-abuse indicators;
+  - additive 0–100 risk scoring with per-evidence `reason()` (no black-box scores)
+    and level thresholds (Safe/Low/Medium/High/Critical);
+  - `DetectionEngine` orchestrating hash + YARA + heuristic layers over
+    `ScannedFile` / `ScanReport`;
+  - persistence: `persist_detection`, `record_scan_event`, `detection_count`.
+- DB migration `002_detection.sql`: `signature_sets`, `signatures`,
+  `detection_results`, `scan_events` (history/audit/reporting).
+- `aegis-detect` benchmark (`benches/detect_bench.rs`, 10k files, peak-memory
+  via `K32GetProcessMemoryInfo` on Windows).
+- `DETECTION_ENGINE.md` — architecture, data flow, scoring, performance, limits.
+
+### Changed
+- `aegis-db::apply_migrations` now applies an ordered migration list (001 + 002),
+  recording each version and skipping already-applied ones (idempotent).
+
+### Verified
+- `cargo test -p aegis-signatures -p aegis-yara -p aegis-detect`: 25/25 pass.
+- `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features
+  -- -D warnings`: clean.
+- Benchmark (release, 10,000 files): scan 171 ms; detect 6,074 ms →
+  1,646 files/s, 607 µs/file, 800 detections, 27.5 MiB peak working set.
+
+### Notes
+- Detection is single-threaded (parallelization is the next throughput item);
+  `aegis-tauri` still excluded from the clippy gate pending the Phase-12 icon set.
+
 ## Unreleased - Phase 2: File Scanner (`aegis-scan`) — VERIFIED
 
 ### Added

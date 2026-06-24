@@ -1,0 +1,12 @@
+[package]
+name = "aegis-yara"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+yara-x = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.10"

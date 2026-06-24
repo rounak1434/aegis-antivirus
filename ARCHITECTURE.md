@@ -104,12 +104,18 @@ Implemented engine crates:
   collection, multi-threaded hashing via rayon with atomic progress counters,
   a progress callback, and cooperative cancellation. Filesystem-only and
   platform-aware (Windows hidden/system attribute detection behind `cfg`).
+- `aegis-signatures` (Phase 3): SHA-256/MD5 signature database — SQLite + local
+  file sources + in-memory cache, with `reload()`.
+- `aegis-yara` (Phase 3): YARA-X rule manager — load/validate/compile/cache/scan.
+- `aegis-detect` (Phase 3): detection engine above scanner output. Threat model
+  (`ThreatEvidence`, `ThreatDetection`), heuristics (double/suspicious
+  extension, entropy/packing, script + PowerShell indicators), additive 0–100
+  risk scoring with explainable evidence, and persistence to `detection_results`
+  / `scan_events`. See `DETECTION_ENGINE.md`.
 
 Future crates:
 
 - `aegis-scan` (archive recursion limits — extends the above).
-- `aegis-yara`: YARA-X compilation, loading, and execution.
-- `aegis-heuristics`: entropy, suspicious extensions, obfuscation, script indicators.
 - `aegis-windows`: registry, tasks, services, drivers, browser extensions, hosts scanner.
 - `aegis-realtime`: file/process monitoring and alert generation.
 - `aegis-reporting`: report rendering and export.

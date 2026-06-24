@@ -3,9 +3,12 @@ use rusqlite::{params, Connection};
 use std::path::Path;
 use thiserror::Error;
 
-const INITIAL_MIGRATION: &str = include_str!("../../../migrations/001_initial.sql");
-const INITIAL_MIGRATION_VERSION: i64 = 1;
-const INITIAL_MIGRATION_NAME: &str = "001_initial";
+/// Ordered migration set: (version, name, sql). Applied in order; each is
+/// recorded in `schema_migrations` and skipped if already present.
+const MIGRATIONS: &[(i64, &str, &str)] = &[
+    (1, "001_initial", include_str!("../../../migrations/001_initial.sql")),
+    (2, "002_detection", include_str!("../../../migrations/002_detection.sql")),
+];
 
 #[derive(Debug, Error)]
 pub enum DbError {
@@ -27,11 +30,28 @@ pub fn open_in_memory_database() -> Result<Connection, DbError> {
 
 pub fn apply_migrations(conn: &mut Connection) -> Result<(), DbError> {
     let tx = conn.transaction()?;
-    tx.execute_batch(INITIAL_MIGRATION)?;
-    tx.execute(
-        "INSERT OR IGNORE INTO schema_migrations(version, name, applied_at_utc) VALUES (?1, ?2, ?3)",
-        params![INITIAL_MIGRATION_VERSION, INITIAL_MIGRATION_NAME, Utc::now().to_rfc3339()],
+    tx.execute_batch(
+        "CREATE TABLE IF NOT EXISTS schema_migrations (
+            version INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            applied_at_utc TEXT NOT NULL
+        );",
     )?;
+    for (version, name, sql) in MIGRATIONS {
+        let already: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = ?1)",
+            params![version],
+            |row| row.get(0),
+        )?;
+        if already {
+            continue;
+        }
+        tx.execute_batch(sql)?;
+        tx.execute(
+            "INSERT OR IGNORE INTO schema_migrations(version, name, applied_at_utc) VALUES (?1, ?2, ?3)",
+            params![version, name, Utc::now().to_rfc3339()],
+        )?;
+    }
     tx.commit()?;
     Ok(())
 }

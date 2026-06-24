@@ -80,14 +80,24 @@
       (clean), benchmark (29,981 files/s · 468.5 MiB/s) — see SCANNER_VALIDATION.md.
 - [ ] Wire `aegis-scan` into `aegis-service` runtime + IPC progress events.
 
-## Phase 3
+## Phase 3 — Detection Engine — VERIFIED ✓
 
-- [ ] Implement hash signature matcher.
-- [ ] Integrate YARA-X.
-- [ ] Implement entropy analyzer.
-- [ ] Implement filename and extension heuristics.
-- [ ] Implement script indicators.
-- [ ] Implement threat scoring.
+> Validated 2026-06-24: `cargo test -p aegis-detect` (+signatures/yara) 25/25 pass,
+> `cargo clippy --workspace --exclude aegis-tauri … -D warnings` clean, benchmark
+> 10k files → 1,646 files/s, 607 µs/file, 800 detections, 27.5 MiB. See
+> `DETECTION_ENGINE.md` + `CHANGELOG.md`.
+
+- [x] `aegis-signatures` crate: SHA-256/MD5 SignatureDatabase (SQLite + files +
+      in-memory cache, load/reload/contains_*).
+- [x] Integrate YARA-X (`aegis-yara`): RuleManager load/validate/compile/cache/scan.
+- [x] Heuristics (`aegis-detect`): double extension, suspicious extension,
+      entropy/packed-executable, script indicators, PowerShell abuse indicators.
+- [x] Threat model: ThreatLevel, ThreatEvidence, ThreatDetection.
+- [x] Additive 0–100 risk scoring with explainable evidence + level thresholds.
+- [x] DB migration 002: signature_sets, signatures, detection_results, scan_events.
+- [x] Unit + integration tests + fixtures; 10k-file benchmark.
+- [x] `DETECTION_ENGINE.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Wire `aegis-detect` into `aegis-service` scan pipeline + IPC threat events.
 
 ## Phase 4
 

@@ -5,6 +5,9 @@ members = [
   "crates/aegis-ipc",
   "crates/aegis-db",
   "crates/aegis-scan",
+  "crates/aegis-signatures",
+  "crates/aegis-yara",
+  "crates/aegis-detect",
   "crates/aegis-service",
   "crates/aegis-update",
   "crates/aegis-quarantine"
@@ -30,3 +33,4 @@ sha2 = "0.10"
 md-5 = "0.10"
 walkdir = "2.5"
 rayon = "1.10"
+yara-x = "1.19"
