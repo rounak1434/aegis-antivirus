@@ -2,6 +2,36 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 11: Windows Installer & Service Deployment — CONFIGURED
+
+### Added
+- Tauri bundle config for **MSI + NSIS** installers; the `aegis-service` binary
+  is bundled as a sidecar (`bundle.externalBin`).
+- `src-tauri/nsis/installer-hooks.nsh` — creates `%ProgramData%\Aegis\{Updates,
+  Quarantine,Logs,Database}`, registers `AegisService` (`sc create` + auto-start
+  + crash-recovery `sc failure` + start), and stops/removes it on uninstall.
+- `src-tauri/wix/service.wxs` — MSI fragment: ProgramData data layout +
+  `sc.exe` service custom actions (install/recovery/start; stop/delete on
+  uninstall, skipped during upgrade).
+- `deploy/service-control.ps1` — install/start/stop/restart/remove/status with
+  admin check, recovery config, and logging.
+- `deploy/build-installers.ps1` — build service → stage sidecar → `tauri build`
+  (MSI+NSIS) → portable ZIP.
+- `deploy/cleanup-data.ps1` — optional full wipe of `%ProgramData%\Aegis`.
+- `INSTALLATION.md` (per-user/machine-wide, silent, upgrade, uninstall) and
+  `DEPLOYMENT.md` (build + service + test matrix).
+
+### Notes
+- Upgrades and standard uninstall **preserve** user data (settings, database,
+  quarantine, signatures, YARA rules).
+- No engine code changed — packaging/deployment only.
+- **Validated here:** `tauri.conf.json` (JSON), `service.wxs` (XML well-formed),
+  all `deploy/*.ps1` (PowerShell parser), NSIS hook present.
+- **Not run here:** the full `tauri build` and the actual MSI/NSIS install +
+  service registration — these need the Tauri WiX/NSIS toolchain and an
+  Administrator session. Run `deploy/build-installers.ps1` on an admin host.
+- Code signing + release engineering are out of scope (next phase).
+
 ## Unreleased - Phase 10: CI/CD & Quality Gates — VERIFIED
 
 ### Added

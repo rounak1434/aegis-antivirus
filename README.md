@@ -178,8 +178,17 @@ npm run build
 npm run tauri dev
 ```
 
-> `aegis-tauri` is excluded from the default test/lint gate until app icons land
-> in the packaging phase.
+## Installation (packaged)
+
+Aegis builds to **MSI**, **NSIS** (`-setup.exe`), and a portable **ZIP**, and
+registers the **AegisService** Windows service (auto-start + crash recovery).
+
+```powershell
+deploy\build-installers.ps1          # build MSI + NSIS + portable ZIP
+```
+
+Install/upgrade/uninstall, silent install, data layout, and service control:
+see [`INSTALLATION.md`](INSTALLATION.md) and [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Roadmap
 

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Aegis MSI fragment: registers AegisService and creates the ProgramData data
+  layout. The service is installed via sc.exe custom actions (deferred, runs as
+  the system account) rather than a native ServiceInstall, so it does not couple
+  to Tauri's harvested file ids. Requires a per-machine (Administrator) install.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <!-- ProgramData\Aegis data layout, preserved across upgrades. -->
+    <DirectoryRef Id="TARGETDIR">
+      <Directory Id="CommonAppDataFolder">
+        <Directory Id="AEGISDATA" Name="Aegis">
+          <Directory Id="AEGISUPDATES" Name="Updates" />
+          <Directory Id="AEGISQUARANTINE" Name="Quarantine" />
+          <Directory Id="AEGISLOGS" Name="Logs" />
+          <Directory Id="AEGISDB" Name="Database" />
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+
+    <ComponentGroup Id="AegisServiceComponentGroup">
+      <Component Id="AegisServiceComponent" Directory="AEGISDATA" Guid="*">
+        <CreateFolder />
+        <RegistryValue Root="HKLM" Key="Software\Aegis\Antivirus" Name="DataDir"
+                       Type="string" Value="[CommonAppDataFolder]Aegis" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Service lifecycle via sc.exe (deferred, system context). -->
+    <CustomAction Id="AegisSvcCreate" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe create AegisService binPath= &quot;\&quot;[INSTALLDIR]aegis-service.exe\&quot;&quot; start= auto DisplayName= &quot;Aegis Security Service&quot;" />
+    <CustomAction Id="AegisSvcDescribe" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe description AegisService &quot;Aegis Antivirus background protection.&quot;" />
+    <CustomAction Id="AegisSvcRecovery" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe failure AegisService reset= 86400 actions= restart/60000/restart/60000/restart/120000" />
+    <CustomAction Id="AegisSvcStart" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe start AegisService" />
+    <CustomAction Id="AegisSvcStop" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe stop AegisService" />
+    <CustomAction Id="AegisSvcDelete" Directory="INSTALLDIR" Execute="deferred" Impersonate="no" Return="ignore"
+      ExeCommand="sc.exe delete AegisService" />
+
+    <InstallExecuteSequence>
+      <Custom Action="AegisSvcCreate" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="AegisSvcDescribe" After="AegisSvcCreate">NOT Installed</Custom>
+      <Custom Action="AegisSvcRecovery" After="AegisSvcDescribe">NOT Installed</Custom>
+      <Custom Action="AegisSvcStart" After="AegisSvcRecovery">NOT Installed</Custom>
+      <Custom Action="AegisSvcStop" Before="RemoveFiles">Installed AND NOT UPGRADINGPRODUCTCODE</Custom>
+      <Custom Action="AegisSvcDelete" After="AegisSvcStop">Installed AND NOT UPGRADINGPRODUCTCODE</Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

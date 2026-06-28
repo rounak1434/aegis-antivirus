@@ -19,6 +19,9 @@ Thumbs.db
 
 # ---- Tauri generated ----
 /src-tauri/gen/
+# Build-time service sidecar (staged by deploy/build-installers.ps1)
+/src-tauri/binaries/
+/target/portable/
 
 # ---- Secrets & runtime security data (NEVER commit) ----
 vault.key

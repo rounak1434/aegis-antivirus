@@ -153,6 +153,27 @@
 - [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
+## Windows Installer & Service Deployment (Phase 11) — CONFIGURED ✓
+
+> Config + scripts validated 2026-06-24 (`tauri.conf.json` JSON, `service.wxs`
+> XML, all `deploy/*.ps1` parse, NSIS hook present). Full installer build + MSI
+> install + service registration NOT run here (needs Tauri WiX/NSIS toolchain +
+> Administrator). See `DEPLOYMENT.md` / `INSTALLATION.md`.
+
+- [x] Bundle targets MSI + NSIS; portable ZIP via build script.
+- [x] Service bundled as Tauri sidecar (`externalBin`).
+- [x] NSIS hooks: data dirs, `sc create/description/failure/start`, uninstall stop+delete.
+- [x] MSI WiX fragment: `ProgramData\Aegis` dirs + service custom actions + recovery.
+- [x] `deploy/service-control.ps1` (install/start/stop/restart/remove/status, recovery).
+- [x] `deploy/build-installers.ps1` (service → sidecar → tauri build → portable zip).
+- [x] `deploy/cleanup-data.ps1` (full data wipe, confirmed/`-Force`).
+- [x] Directory layout `%ProgramData%\Aegis\{Updates,Quarantine,Logs,Database}`.
+- [x] Upgrade preserves user data; uninstall preserves data (full wipe optional).
+- [x] Crash recovery (sc failure restart) + auto-start + graceful stop.
+- [x] Install/service/uninstall logs under `…\Logs`.
+- [x] `INSTALLATION.md` + `DEPLOYMENT.md`; README/ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Run `build-installers.ps1` on an admin Windows host to produce + smoke-test installers.
+
 ## CI/CD & Quality Gates (Phase 10) — VERIFIED ✓
 
 > Validated 2026-06-24: all 9 workflow/template YAML files parse (`npx js-yaml`);

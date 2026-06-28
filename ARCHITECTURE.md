@@ -89,6 +89,13 @@ Responsibilities:
 
 The service is designed as a long-running Tokio runtime with explicit task supervision. Phase 1 includes the service crate and lifecycle skeleton only.
 
+**Deployment (Phase 11):** the service binary is bundled as a Tauri sidecar and
+registered as the `AegisService` Windows service by the installer (NSIS hooks +
+MSI WiX custom actions, or `deploy/service-control.ps1`): `start= auto`, crash
+recovery (restart on failure), graceful stop. User data lives under
+`%ProgramData%\Aegis\{Updates,Quarantine,Logs,Database}` and is preserved across
+upgrades/uninstall. See `DEPLOYMENT.md` / `INSTALLATION.md`.
+
 ## 3. Engine Crates
 
 Engine crates are Rust library crates with focused responsibilities.

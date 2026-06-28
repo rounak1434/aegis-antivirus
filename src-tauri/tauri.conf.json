@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Aegis Antivirus",
-  "version": "0.1.0-phase1",
+  "version": "0.1.0",
   "identifier": "dev.aegis.antivirus",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -25,9 +25,24 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["msi", "nsis"],
+    "publisher": "Aegis Project",
+    "copyright": "Copyright © Aegis Project. Licensed under Apache-2.0.",
     "category": "Utility",
-    "shortDescription": "Windows desktop antivirus UI for AegisService",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico", "icons/icon.png"]
+    "shortDescription": "Open-source Windows antivirus (UI + AegisService).",
+    "longDescription": "Aegis Antivirus — a Rust-powered, privilege-separated Windows antivirus: multi-threaded scanner, layered detection (hash + YARA-X + heuristics), encrypted quarantine, Windows persistence scanner, real-time protection, and a secure signed-update system. Installs the desktop UI and the AegisService background service.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico", "icons/icon.png"],
+    "externalBin": ["binaries/aegis-service"],
+    "licenseFile": "../LICENSE",
+    "windows": {
+      "wix": {
+        "fragmentPaths": ["wix/service.wxs"],
+        "componentRefs": ["AegisServiceComponent"]
+      },
+      "nsis": {
+        "installMode": "both",
+        "installerHooks": "nsis/installer-hooks.nsh"
+      }
+    }
   }
 }
