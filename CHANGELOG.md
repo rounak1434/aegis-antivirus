@@ -2,6 +2,42 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 9: UI ↔ Service Integration — VERIFIED
+
+### Added
+- **Tauri command bridge** (`src-tauri/src/commands`): 21 typed
+  `#[tauri::command]`s over a managed `AegisOrchestrator` (built at
+  `%LOCALAPPDATA%\Aegis`). Covers scan, threats, quarantine, windows scan,
+  real-time, updates, settings, and health.
+- **Typed IPC layer**: `src/lib/ipc.ts` (single `invoke` site, `ServiceError`
+  normalization, `inTauri()`), `src/lib/api.ts` (domain wrappers), and snake_case
+  DTO types in `src/types/ipc.ts`.
+- **Zustand stores**: `scanStore`, `threatStore`, `quarantineStore`,
+  `updateStore`, `realtimeStore`, `settingsStore` (+ `healthStore`).
+- **Live screens**: Dashboard, Scan Center (Quick/Full/Deep/Custom + Cancel +
+  live progress/ETA), Threat Center (filter/search/sort + evidence drawer),
+  Quarantine (restore/delete/metadata), Real-time (state/policy/counters), new
+  **Updates** page (installed/check/install/rollback), Settings (persisted).
+- Error/loading/empty components (`src/components/States.tsx`).
+- Orchestrator `get_settings`/`save_settings` (settings table); `InstallOutcome`
+  is now serializable.
+- App icon set (`src-tauri/icons/*`) so `aegis-tauri` compiles + joins the gate.
+- Frontend tests (vitest + Testing Library): IPC wrappers, stores, Dashboard.
+
+### Removed
+- All mock/simulated UI data: `useScanSimulation`, threat/dashboard seed arrays,
+  the old `securityStore`.
+
+### Verified
+- `npm run build` (tsc + vite): clean. `npm test` (vitest): 10/10.
+- `cargo build -p aegis-tauri`: compiles (247 crates).
+- `cargo test --workspace --exclude aegis-tauri`: 118 pass; clippy `-D warnings` clean.
+
+### Notes
+- Pause/Resume not added (would require modifying the scanner engine); Cancel is
+  real. The UI hosts the orchestrator in-process; a separate service process over
+  named-pipe IPC is the next step.
+
 ## Unreleased - Phase 8: Secure Update System — VERIFIED
 
 ### Added

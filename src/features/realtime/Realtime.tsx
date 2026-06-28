@@ -1,143 +1,88 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Icon } from "../../components/Icon";
-import type { IconName } from "../../components/Icon";
+import { ErrorBanner } from "../../components/States";
+import { useRealtimeStore } from "../../stores/realtimeStore";
+import type { ProtectionMode } from "../../types/ipc";
 import "./realtime.css";
 
-interface Shield {
-  key: string;
-  icon: IconName;
-  title: string;
-  subtitle: string;
-  desc: string;
-  on: boolean;
-}
-
-const INITIAL_SHIELDS: Shield[] = [
-  { key: "fs", icon: "list", title: "File system shield", subtitle: "on-access scan · minifilter", desc: "Scans files on create & modify before they're written. Blocks known-bad writes inline.", on: true },
-  { key: "proc", icon: "registry", title: "Process & injection shield", subtitle: "ETW · execution monitoring", desc: "Watches process launches and cross-process memory writes; blocks injection into trusted processes.", on: true },
-  { key: "ransom", icon: "shield", title: "Ransomware shield", subtitle: "controlled folder access", desc: "Detects mass-encryption behaviour and blocks untrusted apps from modifying protected folders.", on: true },
-  { key: "dl", icon: "bolt", title: "Download shield", subtitle: "browser & SmartScreen-style", desc: "Scans downloaded files as they land and checks reputation before the user can open them.", on: true },
-  { key: "reg", icon: "registry", title: "Registry shield", subtitle: "persistence keys", desc: "Alerts on writes to Run keys, services, and other autostart locations from untrusted processes.", on: true },
-  { key: "net", icon: "globe", title: "Network shield", subtitle: "C2 / beacon detection", desc: "Flags suspicious outbound connections and known command-and-control endpoints. Currently off.", on: false }
+const MODES: { mode: ProtectionMode; label: string; desc: string }[] = [
+  { mode: "monitor_only", label: "Monitor only", desc: "Observe and log; never act." },
+  { mode: "notify_only", label: "Notify only", desc: "Alert on detections; take no action (default)." },
+  { mode: "auto_quarantine", label: "Auto-quarantine", desc: "Quarantine high/critical; notify otherwise." }
 ];
 
-interface RtEvent {
-  tone: string;
-  title: string;
-  verb: string;
-  detail: string;
-  time: string;
-}
-
-const EVENTS: RtEvent[] = [
-  { tone: "var(--danger)", verb: "Blocked", title: "process injection", detail: "powershell.exe → explorer.exe", time: "just now" },
-  { tone: "var(--accent)", verb: "Scanned", title: "download · clean", detail: "setup_legit.msi · signed", time: "2m" },
-  { tone: "var(--warn)", verb: "Allowed (prompted)", title: "registry write", detail: "HKCU\\...\\Run ← Spotify.exe", time: "6m" },
-  { tone: "var(--danger)", verb: "Blocked", title: "ransomware-like behaviour", detail: "unknown.exe · 312 files in 4s → Documents", time: "11m" },
-  { tone: "var(--accent)", verb: "Scanned", title: "file write · clean", detail: "report.docx · MS Word", time: "14m" }
-];
-
-const FOLDERS = ["C:\\Users\\admin\\Documents", "C:\\Users\\admin\\Pictures", "D:\\Work"];
-const ALLOWED_APPS = ["WINWORD.EXE", "EXCEL.EXE", "photoshop.exe", "Code.exe"];
-
-/** Real-time protection — React conversion of design-prototype/realtime.html. */
+/** Real-time protection — live engine state, policy, and monitoring from AegisService. */
 export function Realtime() {
-  const [shields, setShields] = useState<Shield[]>(INITIAL_SHIELDS);
-  const onCount = shields.filter((s) => s.on).length;
+  const { status, error, load, start, stop } = useRealtimeStore();
 
-  const toggle = (key: string) =>
-    setShields((prev) => prev.map((s) => (s.key === key ? { ...s, on: !s.on } : s)));
+  useEffect(() => { void load(); }, [load]);
+
+  const running = status?.running ?? false;
+  const mode = status?.mode ?? "notify_only";
+
+  const setMode = (m: ProtectionMode) => void start(m); // (re)start under the chosen policy
 
   return (
     <div className="realtime-screen">
+      {error ? <div className="mb-16"><ErrorBanner error={error} onRetry={() => void load()} /></div> : null}
+
       <div className="rt-banner rise">
         <Icon name="realtime" strokeWidth={1.7} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5 }}>Real-time protection is active</div>
+          <div style={{ fontWeight: 600, fontSize: 13.5 }}>Real-time protection is {running ? "active" : "off"}</div>
           <div style={{ fontSize: 12, color: "var(--muted)" }}>
-            {onCount} of 6 shields on · monitoring file, process, registry, network &amp; download events live
+            {status ? `${status.watched_paths.length} watched paths · ${status.events_processed} events · ${status.alerts_raised} alerts` : "Reading status…"}
           </div>
         </div>
-        <span className="pill ok"><span className="dot" />active</span>
+        <span className={"pill " + (running ? "ok" : "muted")}><span className="dot" />{running ? "active" : "inactive"}</span>
       </div>
 
-      <div className="shield-grid mb-16 rise-2">
-        {shields.map((s) => (
-          <div className={"shield" + (s.on ? "" : " off")} key={s.key}>
+      <div className="grid g-2 mb-16 rise-2">
+        <div className="card pad-lg">
+          <div className="card-h"><h3>Protection engine</h3></div>
+          <div className="shield">
             <div className="sh">
-              <div className="ico">
-                <Icon name={s.icon} strokeWidth={1.7} />
-              </div>
-              <div>
-                <div className="st">{s.title}</div>
-                <div className="ss">{s.subtitle}</div>
-              </div>
-              <button
-                className={"toggle" + (s.on ? "" : " off")}
-                onClick={() => toggle(s.key)}
-                role="switch"
-                aria-checked={s.on}
-                aria-label={s.title}
-              />
+              <div className="ico"><Icon name="realtime" strokeWidth={1.7} /></div>
+              <div><div className="st">File & process monitoring</div><div className="ss">notify (filesystem) + sysinfo (processes)</div></div>
+              <button className={"toggle" + (running ? "" : " off")} onClick={() => (running ? void stop() : void start(mode))} role="switch" aria-checked={running} aria-label="Real-time protection" />
             </div>
-            <div className="desc">{s.desc}</div>
+            <div className="desc">Watches Downloads, Desktop, Documents, Temp, and the user profile; scans new/changed files and launched processes through the detection engine.</div>
           </div>
-        ))}
+        </div>
+
+        <div className="card pad-lg">
+          <div className="card-h"><h3>Policy mode</h3><span className="ch-sub">applies on next detection</span></div>
+          {MODES.map((m) => (
+            <div className="opt" key={m.mode}>
+              <div><div className="on-t">{m.label}</div><div className="on-s">{m.desc}</div></div>
+              <button className={"toggle" + (mode === m.mode ? "" : " off")} onClick={() => setMode(m.mode)} role="radio" aria-checked={mode === m.mode} aria-label={m.label} />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid g-2">
         <div className="card pad-lg rise-2">
-          <div className="card-h">
-            <h3>Live protection events</h3>
-            <span className="ch-right">
-              <span className="pill ok" style={{ fontSize: 10 }}>
-                <span className="dot" />streaming
-              </span>
-            </span>
+          <div className="card-h"><h3>Monitoring counters</h3><span className="ch-right"><span className="pill ok" style={{ fontSize: 10 }}><span className="dot" />{running ? "streaming" : "idle"}</span></span></div>
+          <div className="grid g-2">
+            <div className="card stat"><div className="s-label">Events processed</div><div className="s-val" style={{ fontSize: 22 }}>{status?.events_processed ?? 0}</div></div>
+            <div className="card stat"><div className="s-label">Alerts raised</div><div className="s-val text-danger" style={{ fontSize: 22 }}>{status?.alerts_raised ?? 0}</div></div>
           </div>
-          {EVENTS.map((e, i) => (
-            <div className="ev-row" key={i}>
-              <span className="ed" style={{ background: e.tone }} />
-              <div>
-                <div className="em"><b>{e.verb}</b> {e.title}</div>
-                <div className="es">{e.detail}</div>
-              </div>
-              <time>{e.time}</time>
-            </div>
-          ))}
         </div>
 
         <div className="card pad-lg rise-3">
-          <div className="card-h">
-            <h3>Controlled folder access</h3>
-            <span className="ch-sub">protected from untrusted apps</span>
-            <div className="ch-right">
-              <button className="btn ghost sm">+ Add folder</button>
-            </div>
-          </div>
-          {FOLDERS.map((f) => (
-            <div className="cf" key={f}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.7" style={{ width: 16, height: 16 }}>
-                <path d="M3 7h7l2 2h9v10H3z" />
-              </svg>
-              <span className="fp">{f}</span>
-              <span className="pill ok" style={{ marginLeft: "auto", fontSize: 10 }}>
-                <span className="dot" />protected
-              </span>
-            </div>
-          ))}
-          <div className="divider" />
-          <div className="card-h">
-            <h3 style={{ fontSize: 13 }}>Allowed apps</h3>
-          </div>
-          <div className="flex gap-8" style={{ flexWrap: "wrap" }}>
-            {ALLOWED_APPS.map((a) => (
-              <span className="pill muted" key={a}>{a}</span>
-            ))}
-            <button className="chip" style={{ fontSize: 11, padding: "4px 10px", borderRadius: 20, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--fg-2)", cursor: "pointer" }}>
-              + allow app
-            </button>
-          </div>
+          <div className="card-h"><h3>Watched folders</h3><span className="ch-sub">monitored for changes</span></div>
+          {status && status.watched_paths.length > 0 ? (
+            status.watched_paths.map((f) => (
+              <div className="cf" key={f}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.7" style={{ width: 16, height: 16 }}><path d="M3 7h7l2 2h9v10H3z" /></svg>
+                <span className="fp">{f}</span>
+                <span className="pill ok" style={{ marginLeft: "auto", fontSize: 10 }}><span className="dot" />watched</span>
+              </div>
+            ))
+          ) : (
+            <div className="muted" style={{ fontSize: 13 }}>{running ? "No folders resolved on this host." : "Start protection to watch folders."}</div>
+          )}
         </div>
       </div>
     </div>

@@ -153,6 +153,23 @@
 - [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
+## UI ↔ Service Integration (Phase 9) — VERIFIED ✓
+
+> Validated 2026-06-24: `npm run build` clean, `npm test` 10/10 (vitest),
+> `cargo build -p aegis-tauri` compiles, `cargo test --workspace --exclude
+> aegis-tauri` 118 pass, clippy clean. See `UI_SERVICE_INTEGRATION.md`.
+
+- [x] Tauri command bridge (21 commands) over managed `AegisOrchestrator`.
+- [x] App icons generated (`src-tauri/icons/*`) — `aegis-tauri` now compiles.
+- [x] Typed IPC layer (`src/lib/api.ts`, single `invoke` site); DTO types.
+- [x] Zustand stores: scan, threat, quarantine, update, realtime, settings (+ health).
+- [x] All screens live (Dashboard, Scan, Threats, Quarantine, Real-time, Updates, Settings).
+- [x] Mocks removed (useScanSimulation, threat/dashboard seed arrays, securityStore).
+- [x] Error/loading/empty states; settings persisted via service (`get/save_settings`).
+- [x] Tests: IPC wrappers, stores, Dashboard component (vitest).
+- [x] `UI_SERVICE_INTEGRATION.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+- [ ] Run the orchestrator as a separate service process over named-pipe IPC.
+
 ## Secure Update System (`aegis-update`) — VERIFIED ✓
 
 > Validated 2026-06-24: `cargo test -p aegis-update` 17/17 pass (+service 12/12),

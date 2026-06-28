@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ErrorBanner } from "../../components/States";
+import { useSettingsStore } from "../../stores/settingsStore";
 import "./settings.css";
 
 type TabKey = "protection" | "scanning" | "updates" | "exclusions" | "security";
@@ -11,202 +14,129 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "security", label: "Security" }
 ];
 
-/** A controlled toggle switch matching the prototype's `.toggle` element. */
-function Toggle({ defaultOn = true, label }: { defaultOn?: boolean; label: string }) {
-  const [on, setOn] = useState(defaultOn);
+/** Store-bound toggle: state lives in settingsStore and is persisted via AegisService. */
+function Toggle({ k, label, def = true }: { k: string; label: string; def?: boolean }) {
+  const values = useSettingsStore((s) => s.values);
+  const setVal = useSettingsStore((s) => s.set);
+  const on = (values[k] as boolean | undefined) ?? def;
+  return <button className={"toggle" + (on ? "" : " off")} onClick={() => setVal(k, !on)} role="switch" aria-checked={on} aria-label={label} />;
+}
+
+function Select({ k, options, def }: { k: string; options: string[]; def: string }) {
+  const values = useSettingsStore((s) => s.values);
+  const setVal = useSettingsStore((s) => s.set);
+  const value = (values[k] as string | undefined) ?? def;
   return (
-    <button
-      className={"toggle" + (on ? "" : " off")}
-      onClick={() => setOn((v) => !v)}
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-    />
+    <select className="sel-input" value={value} onChange={(e) => setVal(k, e.target.value)} aria-label={k}>
+      {options.map((o) => <option key={o}>{o}</option>)}
+    </select>
   );
 }
 
 function Opt({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
   return (
     <div className="opt">
-      <div>
-        <div className="on-t">{title}</div>
-        <div className="on-s">{sub}</div>
-      </div>
+      <div><div className="on-t">{title}</div><div className="on-s">{sub}</div></div>
       {children}
     </div>
   );
 }
 
-const UPDATE_STEPS: [number, string][] = [
-  [20, "Connecting over TLS 1.3…"],
-  [45, "Downloading delta (2,104 signatures)…"],
-  [70, "Verifying signature against pinned key…"],
-  [90, "Applying atomic swap…"],
-  [100, "Up to date · rollback point saved ✓"]
-];
-
-/** Settings & updates — React conversion of design-prototype/settings.html. */
+/** Settings — every value loaded from and persisted via AegisService. */
 export function Settings() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>("protection");
-  const [updProgress, setUpdProgress] = useState<number | null>(null);
-  const [updStatus, setUpdStatus] = useState<string>("");
-  const [updChecking, setUpdChecking] = useState(false);
+  const { loading, saving, dirty, error, load, save } = useSettingsStore();
 
-  const runUpdate = () => {
-    if (updChecking) return;
-    setUpdChecking(true);
-    setUpdProgress(0);
-    let i = 0;
-    const iv = setInterval(() => {
-      const [pct, msg] = UPDATE_STEPS[i];
-      setUpdProgress(pct);
-      setUpdStatus(msg);
-      if (pct === 100) {
-        clearInterval(iv);
-        setUpdChecking(false);
-      }
-      i += 1;
-    }, 650);
-  };
-
-  const done = updProgress === 100;
+  useEffect(() => { void load(); }, [load]);
 
   return (
     <div className="settings-screen">
+      {error ? <div className="mb-16"><ErrorBanner error={error} onRetry={() => void load()} /></div> : null}
+
+      <div className="card-h mb-16">
+        <h3>Settings</h3>
+        <span className="ch-sub">{loading ? "loading…" : dirty ? "unsaved changes" : "saved"}</span>
+        <div className="ch-right">
+          <button className="btn primary" onClick={() => void save()} disabled={!dirty || saving}>{saving ? "Saving…" : "Save changes"}</button>
+        </div>
+      </div>
+
       <div className="settings-layout rise">
         <nav className="stabs">
           {TABS.map((t) => (
-            <button key={t.key} className={"stab" + (tab === t.key ? " on" : "")} onClick={() => setTab(t.key)}>
-              {t.label}
-            </button>
+            <button key={t.key} className={"stab" + (tab === t.key ? " on" : "")} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
         </nav>
 
         <div>
-          {/* PROTECTION */}
           <div className={"panel" + (tab === "protection" ? " on" : "")}>
             <div className="card pad-lg">
               <div className="card-h"><h3>Protection engines</h3><span className="ch-sub">enable detection layers</span></div>
-              <Opt title="Signature detection" sub="SHA-256/MD5 + rules · fastest, zero false-positives"><Toggle label="Signature detection" /></Opt>
-              <Opt title="Heuristic detection" sub="Suspicious APIs, packers, script & PowerShell abuse"><Toggle label="Heuristic detection" /></Opt>
-              <Opt title="Behavioral detection" sub="Runtime monitoring & ransomware behaviour"><Toggle label="Behavioral detection" /></Opt>
-              <Opt title="ML risk scoring" sub="PE features + entropy for unknown files · may raise false-positives"><Toggle label="ML risk scoring" /></Opt>
+              <Opt title="Signature detection" sub="SHA-256/MD5 + rules"><Toggle k="sig_detection" label="Signature detection" /></Opt>
+              <Opt title="Heuristic detection" sub="Packers, script & PowerShell abuse"><Toggle k="heuristics" label="Heuristic detection" /></Opt>
+              <Opt title="YARA rules" sub="Compiled rule matching"><Toggle k="yara" label="YARA rules" /></Opt>
+              <Opt title="ML risk scoring" sub="PE features + entropy"><Toggle k="ml_scoring" label="ML risk scoring" /></Opt>
             </div>
             <div className="card pad-lg mt-16">
               <div className="card-h"><h3>Sensitivity</h3></div>
-              <Opt title="Detection threshold" sub="Higher = catches more, more false positives">
-                <select className="sel-input" defaultValue="Balanced (recommended)">
-                  <option>Balanced (recommended)</option>
-                  <option>Aggressive</option>
-                  <option>Cautious</option>
-                </select>
-              </Opt>
-              <Opt title="Auto-quarantine malicious" sub="Isolate high-confidence threats without prompting"><Toggle label="Auto-quarantine malicious" /></Opt>
+              <Opt title="Detection threshold" sub="Higher = catches more"><Select k="threshold" def="Balanced" options={["Balanced", "Aggressive", "Cautious"]} /></Opt>
+              <Opt title="Auto-quarantine malicious" sub="Isolate high-confidence threats"><Toggle k="auto_quarantine" label="Auto-quarantine" /></Opt>
             </div>
           </div>
 
-          {/* SCANNING */}
           <div className={"panel" + (tab === "scanning" ? " on" : "")}>
             <div className="card pad-lg">
               <div className="card-h"><h3>Scan behaviour</h3></div>
-              <Opt title="Scan inside archives" sub="ZIP, RAR, 7z, TAR, GZIP — recursive"><Toggle label="Scan inside archives" /></Opt>
-              <Opt title="Scan hidden & system files" sub="Include protected OS directories"><Toggle label="Scan hidden and system files" /></Opt>
-              <Opt title="Incremental scanning" sub="Skip unchanged files using the cache"><Toggle label="Incremental scanning" /></Opt>
-              <Opt title="Worker threads" sub="More threads = faster, higher CPU">
-                <select className="sel-input" defaultValue="Auto (8)"><option>Auto (8)</option><option>4</option><option>16</option></select>
-              </Opt>
-              <Opt title="Max archive depth" sub="Guards against zip bombs">
-                <select className="sel-input" defaultValue="5 levels"><option>5 levels</option><option>3 levels</option><option>10 levels</option></select>
-              </Opt>
+              <Opt title="Scan inside archives" sub="ZIP, RAR, 7z — recursive"><Toggle k="scan_archives" label="Scan archives" /></Opt>
+              <Opt title="Scan hidden & system files" sub="Include protected OS dirs"><Toggle k="scan_hidden" label="Scan hidden files" /></Opt>
+              <Opt title="Incremental scanning" sub="Skip unchanged files"><Toggle k="incremental" label="Incremental scanning" /></Opt>
+              <Opt title="Worker threads" sub="More = faster, higher CPU"><Select k="threads" def="Auto" options={["Auto", "4", "8", "16"]} /></Opt>
             </div>
             <div className="card pad-lg mt-16">
               <div className="card-h"><h3>Scheduled scans</h3></div>
-              <Opt title="Daily quick scan" sub="02:00 · memory + persistence"><Toggle label="Daily quick scan" /></Opt>
-              <Opt title="Weekly full scan" sub="Sunday 03:00 · all drives"><Toggle label="Weekly full scan" /></Opt>
+              <Opt title="Daily quick scan" sub="02:00 · memory + persistence"><Toggle k="sched_daily" label="Daily quick scan" /></Opt>
+              <Opt title="Weekly full scan" sub="Sunday 03:00 · all drives"><Toggle k="sched_weekly" label="Weekly full scan" /></Opt>
             </div>
           </div>
 
-          {/* UPDATES */}
           <div className={"panel" + (tab === "updates" ? " on" : "")}>
-            <div className="update-card">
-              <div className="upd-row">
-                <div className="ico">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5" /></svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>Signatures up to date</div>
-                  <div className="muted" style={{ fontSize: 12.5 }}>v2024.06.22.02 · 1,420,338 signatures · checked 2h ago</div>
-                </div>
-                <button className="btn primary" onClick={runUpdate} disabled={updChecking}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 15, height: 15 }}><path d="M21 12a9 9 0 1 1-3-6.7L21 8" /></svg>
-                  Check now
-                </button>
-              </div>
-              {updProgress !== null ? (
-                <div className="bar-track mt-16">
-                  <div className="bar-fill" style={{ width: updProgress + "%", background: done ? "var(--accent)" : undefined }} />
-                </div>
-              ) : null}
-              {updStatus ? (
-                <div className="mt-8" style={{ fontSize: 12, color: done ? "var(--accent)" : "var(--muted)" }}>{updStatus}</div>
-              ) : null}
-              <ul className="secure-list">
-                <li><CheckGlyph />Delta updates downloaded over TLS 1.3</li>
-                <li><CheckGlyph />Verified against a pinned signing key before install</li>
-                <li><CheckGlyph />Atomic swap with automatic rollback on failure</li>
-              </ul>
+            <div className="card pad-lg">
+              <div className="card-h"><h3>Updates</h3><span className="ch-sub">signature & rule delivery</span></div>
+              <Opt title="Automatic updates" sub="Check periodically"><Toggle k="auto_update" label="Automatic updates" /></Opt>
+              <Opt title="Update schedule" sub="How often to check"><Select k="update_schedule" def="Daily" options={["Manual", "Daily", "Weekly", "Startup"]} /></Opt>
+              <Opt title="Release channel" sub="Stable or beta feed"><Select k="channel" def="Stable" options={["Stable", "Beta"]} /></Opt>
+              <div className="opt"><div><div className="on-t">Update center</div><div className="on-s">Installed components, check, install, rollback</div></div>
+                <button className="btn ghost sm" onClick={() => navigate("/updates")}>Open →</button></div>
             </div>
-            <div className="card pad-lg mt-16">
-              <div className="card-h"><h3>Update channel</h3></div>
-              <Opt title="Automatic updates" sub="Check every 2 hours"><Toggle label="Automatic updates" /></Opt>
-              <Opt title="Release channel" sub="Stable signature feed">
-                <select className="sel-input" defaultValue="Stable"><option>Stable</option><option>Beta (faster, riskier)</option></select>
+          </div>
+
+          <div className={"panel" + (tab === "exclusions" ? " on" : "")}>
+            <div className="card pad-lg">
+              <div className="card-h"><h3>Excluded paths</h3><span className="ch-sub">stored in service settings</span></div>
+              <Opt title="Exclusion list" sub="Comma-separated paths/globs never scanned">
+                <input className="sel-input" placeholder="C:\\Dev\\node_modules, *.iso"
+                  value={(useSettingsStore.getState().values.exclusions as string) ?? ""}
+                  onChange={(e) => useSettingsStore.getState().set("exclusions", e.target.value)} aria-label="exclusions" />
               </Opt>
             </div>
           </div>
 
-          {/* EXCLUSIONS */}
-          <div className={"panel" + (tab === "exclusions" ? " on" : "")}>
-            <div className="card pad-lg">
-              <div className="card-h"><h3>Excluded paths &amp; files</h3><span className="ch-sub">never scanned — use with care</span>
-                <div className="ch-right"><button className="btn ghost sm">+ Add exclusion</button></div>
-              </div>
-              {["C:\\Dev\\node_modules", "*.iso", "D:\\VMs"].map((p) => (
-                <div className="excl-row" key={p}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.7" style={{ width: 15, height: 15 }}><path d="M3 7h7l2 2h9v10H3z" /></svg>
-                  <span className="fp">{p}</span>
-                  <button className="icon-btn" style={{ marginLeft: "auto", width: 28, height: 28 }} aria-label={`Remove ${p}`}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 14, height: 14 }}><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* SECURITY */}
           <div className={"panel" + (tab === "security" ? " on" : "")}>
             <div className="card pad-lg">
               <div className="card-h"><h3>Tamper protection</h3></div>
-              <Opt title="Protect Aegis files & service" sub="Block other apps from disabling or deleting Aegis"><Toggle label="Protect Aegis files and service" /></Opt>
-              <Opt title="Require password to change settings" sub="Prevents malware from weakening protection"><Toggle defaultOn={false} label="Require password to change settings" /></Opt>
-              <Opt title="Reject unsigned IPC clients" sub="Only the signed Aegis UI may talk to the engine"><Toggle label="Reject unsigned IPC clients" /></Opt>
+              <Opt title="Protect Aegis files & service" sub="Block disabling/deleting Aegis"><Toggle k="tamper_protect" label="Tamper protection" /></Opt>
+              <Opt title="Require password to change settings" sub="Prevents malware weakening protection"><Toggle k="settings_password" label="Settings password" def={false} /></Opt>
+              <Opt title="Reject unsigned IPC clients" sub="Only the signed UI may talk to the engine"><Toggle k="signed_ipc" label="Reject unsigned IPC" /></Opt>
             </div>
             <div className="card pad-lg mt-16">
               <div className="card-h"><h3>Privacy</h3></div>
-              <Opt title="Local-only mode" sub="No cloud lookups; all analysis on-device"><Toggle label="Local-only mode" /></Opt>
-              <Opt title="Share anonymous detection stats" sub="Help improve the open-source signature feed"><Toggle defaultOn={false} label="Share anonymous detection stats" /></Opt>
+              <Opt title="Local-only mode" sub="No cloud lookups"><Toggle k="local_only" label="Local-only mode" /></Opt>
+              <Opt title="Share anonymous detection stats" sub="Help improve the feed"><Toggle k="share_stats" label="Share stats" def={false} /></Opt>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function CheckGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M9 11l3 3L22 4" />
-    </svg>
   );
 }

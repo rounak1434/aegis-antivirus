@@ -44,8 +44,8 @@ export const NAV: NavGroup[] = [
   {
     group: "System",
     items: [
-      { key: "widget", path: "/widget", label: "Mini widget", icon: "widget", title: "Mini widget & system tray", crumb: "Aegis / system", ready: false },
-      { key: "settings", path: "/settings", label: "Settings", icon: "settings", title: "Settings & updates", crumb: "Aegis / settings", ready: false }
+      { key: "updates", path: "/updates", label: "Updates", icon: "clock", title: "Signature & rule updates", crumb: "Aegis / updates", ready: true },
+      { key: "settings", path: "/settings", label: "Settings", icon: "settings", title: "Settings & updates", crumb: "Aegis / settings", ready: true }
     ]
   }
 ];

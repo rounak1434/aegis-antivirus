@@ -30,7 +30,7 @@ pub enum UpdateError {
 }
 
 /// Result of a successful install or rollback.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct InstallOutcome {
     pub component: UpdateComponent,
     pub version: String,

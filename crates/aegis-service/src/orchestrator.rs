@@ -362,10 +362,41 @@ impl AegisOrchestrator {
         Ok(engine.rollback(component)?)
     }
 
+    /// Installed components (component, version), read straight from the DB so
+    /// the UI's update page works even before the verifier key is configured.
     pub fn get_update_status(&self) -> Result<Vec<(String, String)>> {
-        let guard = self.update.lock().unwrap();
-        let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
-        Ok(engine.status()?)
+        let conn = self.conn()?;
+        let mut stmt = conn.prepare("SELECT component, version FROM installed_components ORDER BY component")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+
+    // ---- IPC contract: settings -----------------------------------------
+
+    /// Load the persisted UI settings blob (JSON object string; `{}` if unset).
+    pub fn get_settings(&self) -> Result<String> {
+        let conn = self.conn()?;
+        let value: Option<String> = conn
+            .query_row(
+                "SELECT value_json FROM settings WHERE key = 'app'",
+                [],
+                |row| row.get(0),
+            )
+            .ok();
+        Ok(value.unwrap_or_else(|| "{}".to_string()))
+    }
+
+    /// Persist the UI settings blob (validated as JSON) via the service.
+    pub fn save_settings(&self, settings_json: &str) -> Result<()> {
+        // Reject non-JSON so the UI can't store garbage.
+        let _: serde_json::Value = serde_json::from_str(settings_json)?;
+        let conn = self.conn()?;
+        conn.execute(
+            "INSERT INTO settings (key, value_json, updated_at_utc) VALUES ('app', ?1, ?2)
+             ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at_utc = excluded.updated_at_utc",
+            rusqlite::params![settings_json, chrono::Utc::now().to_rfc3339()],
+        )?;
+        Ok(())
     }
 
     // ---- IPC contract: health -------------------------------------------

@@ -1,6 +1,6 @@
 [package]
 name = "aegis-tauri"
-version = "0.1.0-phase1"
+version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 
@@ -10,8 +10,13 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 aegis-common = { path = "../crates/aegis-common" }
 aegis-ipc = { path = "../crates/aegis-ipc" }
+aegis-service = { path = "../crates/aegis-service" }
+aegis-detect = { path = "../crates/aegis-detect" }
+aegis-quarantine = { path = "../crates/aegis-quarantine" }
+aegis-update = { path = "../crates/aegis-update" }
 chrono.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"

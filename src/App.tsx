@@ -6,6 +6,7 @@ import { ScanCenter } from "./features/scan-center/ScanCenter";
 import { ThreatCenter } from "./features/threat-center/ThreatCenter";
 import { Quarantine } from "./features/quarantine/Quarantine";
 import { Realtime } from "./features/realtime/Realtime";
+import { Updates } from "./features/updates/Updates";
 import { Settings } from "./features/settings/Settings";
 
 /**
@@ -26,6 +27,7 @@ export function App() {
           <Route path="threats" element={<ThreatCenter />} />
           <Route path="quarantine" element={<Quarantine />} />
           <Route path="realtime" element={<Realtime />} />
+          <Route path="updates" element={<Updates />} />
           <Route path="settings" element={<Settings />} />
           <Route path="launcher" element={<SectionComingNext />} />
           <Route path="architecture" element={<SectionComingNext />} />

@@ -66,6 +66,12 @@ Responsibilities:
 
 The UI process must be safe to restart without interrupting real-time protection. `AegisService` is the source of truth.
 
+**Phase 9 wiring:** the Tauri app (`src-tauri`) holds the `AegisOrchestrator` in
+managed state and exposes 21 typed `#[tauri::command]`s. The React UI talks to
+them through a single typed IPC layer (`src/lib/api.ts` → `src/lib/ipc.ts`) and
+six Zustand stores — every screen renders live service data, no mocks. See
+`UI_SERVICE_INTEGRATION.md`.
+
 ## 2. Windows Service
 
 The background service is named `AegisService`.

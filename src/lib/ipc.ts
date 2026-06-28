@@ -1,10 +1,31 @@
+/**
+ * Low-level IPC bridge — the ONLY place `invoke` is called. React components
+ * and stores import the typed `api` from ./api, never `invoke` directly.
+ */
 import { invoke } from "@tauri-apps/api/core";
-import type { ProtectionStatus, StartScanCommand, StartScanResult } from "../types/ipc";
 
-export async function getServiceStatus(): Promise<ProtectionStatus> {
-  return invoke<ProtectionStatus>("get_service_status");
+/** True when running inside the Tauri shell (vs. a plain browser/dev preview). */
+export function inTauri(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-export async function startScan(command: StartScanCommand): Promise<StartScanResult> {
-  return invoke<StartScanResult>("start_scan", { command });
+/** Raised when a service command fails; carries the original message. */
+export class ServiceError extends Error {
+  constructor(
+    public readonly command: string,
+    message: string
+  ) {
+    super(message);
+    this.name = "ServiceError";
+  }
+}
+
+/** Invoke a service command, normalizing errors to `ServiceError`. */
+export async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+  try {
+    return await invoke<T>(command, args);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    throw new ServiceError(command, message);
+  }
 }
