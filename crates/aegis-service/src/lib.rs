@@ -30,6 +30,10 @@ pub enum ServiceError {
     Quarantine(#[from] aegis_quarantine::QuarantineError),
     #[error("yara error: {0}")]
     Yara(#[from] aegis_yara::YaraError),
+    #[error("update error: {0}")]
+    Update(#[from] aegis_update::UpdateError),
+    #[error("update subsystem not configured")]
+    UpdatesNotConfigured,
     #[error("serialization error: {0}")]
     Json(#[from] serde_json::Error),
     #[error("job {0} not found")]

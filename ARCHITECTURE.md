@@ -137,6 +137,11 @@ Implemented engine crates:
   engines (scan → detect → quarantine). Policy modes (monitor / notify /
   auto-quarantine), `RealtimeAlert`s, and persistence (migration 005). Runs in a
   background thread under the orchestrator. See `REALTIME_PROTECTION.md`.
+- `aegis-update` (Phase 8): secure update system. Downloads, cryptographically
+  verifies (SHA-256 + Ed25519, anti-rollback, min-app), installs, and rolls back
+  signature / YARA / metadata / config updates. `reqwest` transport with
+  resume/retries; backup-based rollback; migration 006. The orchestrator hot-
+  reloads the affected engine after install. See `UPDATE_SYSTEM.md`.
 
 Future crates:
 

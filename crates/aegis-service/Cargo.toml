@@ -23,6 +23,7 @@ aegis-detect = { path = "../aegis-detect" }
 aegis-quarantine = { path = "../aegis-quarantine" }
 aegis-windows = { path = "../aegis-windows" }
 aegis-realtime = { path = "../aegis-realtime" }
+aegis-update = { path = "../aegis-update" }
 anyhow = { workspace = true }
 chrono = { workspace = true }
 rusqlite = { workspace = true }
@@ -38,3 +39,5 @@ windows-service = "0.7"
 
 [dev-dependencies]
 tempfile = "3.10"
+ed25519-dalek = "2"
+base64 = "0.22"

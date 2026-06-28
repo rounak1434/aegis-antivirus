@@ -47,6 +47,7 @@ pub struct AegisOrchestrator {
     vault: Arc<Mutex<Vault>>,
     jobs: JobManager,
     realtime: Mutex<Option<RealtimeState>>,
+    update: Mutex<Option<aegis_update::UpdateEngine>>,
 }
 
 impl AegisOrchestrator {
@@ -74,6 +75,7 @@ impl AegisOrchestrator {
             vault: Arc::new(Mutex::new(vault)),
             jobs: JobManager::new(),
             realtime: Mutex::new(None),
+            update: Mutex::new(None),
         })
     }
 
@@ -297,6 +299,73 @@ impl AegisOrchestrator {
                 alerts_raised: 0,
             },
         }
+    }
+
+    // ---- IPC contract: secure updates -----------------------------------
+
+    /// Configure the update subsystem with a pinned Ed25519 public key (hex) and
+    /// a fetcher. Storage lives under `<data_dir>/update`.
+    pub fn init_updates(
+        &self,
+        pubkey_hex: &str,
+        fetcher: Box<dyn aegis_update::Fetcher>,
+        app_version: &str,
+    ) -> Result<()> {
+        let verifier = aegis_update::UpdateVerifier::from_hex(pubkey_hex)
+            .map_err(aegis_update::UpdateError::from)?;
+        let root = self.db_path.parent().unwrap_or(Path::new(".")).join("update");
+        let engine = aegis_update::UpdateEngine::new(root, verifier, fetcher, self.db_path.clone(), app_version)?;
+        *self.update.lock().unwrap() = Some(engine);
+        Ok(())
+    }
+
+    pub fn check_updates(&self, available: &[aegis_update::UpdateManifest]) -> Result<Vec<aegis_update::UpdateManifest>> {
+        let guard = self.update.lock().unwrap();
+        let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
+        Ok(engine.check(available)?)
+    }
+
+    pub fn download_updates(&self, manifest: &aegis_update::UpdateManifest) -> Result<()> {
+        let guard = self.update.lock().unwrap();
+        let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
+        engine.download(manifest)?;
+        Ok(())
+    }
+
+    /// Install a downloaded update and hot-reload the affected engine.
+    pub fn install_updates(&self, manifest: &aegis_update::UpdateManifest) -> Result<aegis_update::InstallOutcome> {
+        let outcome = {
+            let guard = self.update.lock().unwrap();
+            let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
+            engine.install(manifest)?
+        };
+        // Reload the running engine from the freshly installed file.
+        match manifest.component {
+            aegis_update::UpdateComponent::SignatureDatabase => {
+                let _ = self.signatures.lock().unwrap().load_file(&outcome.installed_path);
+            }
+            aegis_update::UpdateComponent::YaraRules => {
+                if let Ok(src) = std::fs::read_to_string(&outcome.installed_path) {
+                    let mut mgr = self.yara.lock().unwrap();
+                    mgr.add_source(outcome.installed_path.display().to_string(), src);
+                    let _ = mgr.compile_rules();
+                }
+            }
+            _ => {}
+        }
+        Ok(outcome)
+    }
+
+    pub fn rollback_updates(&self, component: aegis_update::UpdateComponent) -> Result<aegis_update::InstallOutcome> {
+        let guard = self.update.lock().unwrap();
+        let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
+        Ok(engine.rollback(component)?)
+    }
+
+    pub fn get_update_status(&self) -> Result<Vec<(String, String)>> {
+        let guard = self.update.lock().unwrap();
+        let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
+        Ok(engine.status()?)
     }
 
     // ---- IPC contract: health -------------------------------------------

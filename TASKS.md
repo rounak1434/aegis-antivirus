@@ -153,6 +153,24 @@
 - [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
+## Secure Update System (`aegis-update`) — VERIFIED ✓
+
+> Validated 2026-06-24: `cargo test -p aegis-update` 17/17 pass (+service 12/12),
+> `cargo clippy --workspace --exclude aegis-tauri … -D warnings` clean, benchmark
+> 8 MiB → 470 MiB/s download+verify, 1725 MiB/s sha256. See `UPDATE_SYSTEM.md`.
+
+- [x] `UpdateManifest` (version, published_at, sha256, signature, url, size,
+      component, minimum_app_version) + signed canonical message.
+- [x] Crypto verify: SHA-256 + Ed25519 (pinned key), anti-rollback, min-app.
+- [x] Download engine (`reqwest`): resume, timeout, retries, gzip; `Fetcher`
+      trait + offline `LocalFetcher`.
+- [x] Storage: updates/installed/backup + manifest.json; backup-based rollback.
+- [x] Scheduler: Manual / Daily / Weekly / Startup (`is_due`).
+- [x] DB migration 006 (installed_components) + update_history reuse.
+- [x] Service integration: check/download/install/rollback/status + engine reload.
+- [x] Unit + integration (tamper/rollback/anti-rollback/min-app/signature) + bench.
+- [x] `UPDATE_SYSTEM.md`; ARCHITECTURE/TASKS/CHANGELOG updated.
+
 ## Real-Time Protection (`aegis-realtime`) — VERIFIED ✓
 
 > Validated 2026-06-24: `cargo test -p aegis-realtime` 14/14 pass,

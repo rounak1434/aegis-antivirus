@@ -131,6 +131,52 @@ fn realtime_start_stop_status() {
 }
 
 #[test]
+fn secure_update_flow_through_service() {
+    use base64::Engine;
+    use ed25519_dalek::{Signer, SigningKey};
+
+    let (orch, data, feed) = orchestrator();
+    let sk = SigningKey::from_bytes(&[5u8; 32]);
+    let pubkey_hex: String =
+        sk.verifying_key().to_bytes().iter().map(|b| format!("{b:02x}")).collect();
+
+    orch.init_updates(
+        &pubkey_hex,
+        Box::new(aegis_update::LocalFetcher::new(feed.path())),
+        "1.0.0",
+    )
+    .unwrap();
+
+    // A valid signature-database bundle (one known-bad hash line).
+    let payload = format!("sha256:{}\n", "a".repeat(64));
+    let file = "signature_database-2024.06.22.05.bin";
+    std::fs::write(feed.path().join(file), &payload).unwrap();
+
+    let mut manifest = aegis_update::UpdateManifest {
+        version: "2024.06.22.05".into(),
+        published_at: chrono::Utc::now(),
+        sha256: aegis_update::sha256_hex(payload.as_bytes()),
+        signature: String::new(),
+        url: format!("https://feed/{file}"),
+        size: payload.len() as u64,
+        component: aegis_update::UpdateComponent::SignatureDatabase,
+        minimum_app_version: "1.0.0".into(),
+    };
+    manifest.signature = base64::engine::general_purpose::STANDARD
+        .encode(sk.sign(manifest.signed_message().as_bytes()).to_bytes());
+
+    assert_eq!(orch.check_updates(std::slice::from_ref(&manifest)).unwrap().len(), 1);
+    orch.download_updates(&manifest).unwrap();
+    let outcome = orch.install_updates(&manifest).unwrap();
+    assert_eq!(outcome.version, "2024.06.22.05");
+
+    let status = orch.get_update_status().unwrap();
+    assert!(status.iter().any(|(c, v)| c == "signature_database" && v == "2024.06.22.05"));
+
+    let _ = data; // keep tempdir alive
+}
+
+#[test]
 fn stop_scan_cancels() {
     let (orch, _data, work) = orchestrator();
     for i in 0..200 {

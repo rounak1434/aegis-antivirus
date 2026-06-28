@@ -2,6 +2,41 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 8: Secure Update System — VERIFIED
+
+### Added
+- `aegis-update` crate — secure updates for signatures, YARA rules, threat
+  metadata, and engine config:
+  - `UpdateManifest` signed over a canonical `component|version|sha256|size`
+    message; `UpdateComponent` model;
+  - cryptographic gate: SHA-256 integrity + Ed25519 signature (pinned key),
+    anti-rollback (strictly-newer), and minimum-app-version — each a typed
+    `VerifyError`;
+  - download engine (`reqwest`, blocking): byte-range resume, timeout, bounded
+    retries, gzip; `Fetcher` trait with an offline `LocalFetcher` for tests;
+  - storage layout (`updates/`, `installed/`, `backup/`, `manifest.json`) with
+    atomic swap and backup-based rollback;
+  - `UpdateSchedule` (Manual / Daily / Weekly / Startup);
+  - `UpdateEngine`: check → download → install → rollback → status.
+- DB migration `006_update.sql`: `installed_components` (reuses `update_history`
+  from 001 for the action log).
+- Orchestrator update API: `init_updates`, `check_updates`, `download_updates`,
+  `install_updates` (with engine hot-reload), `rollback_updates`,
+  `get_update_status`.
+- `aegis-update` benchmark (`benches/update_bench.rs`); `UPDATE_SYSTEM.md`.
+
+### Changed
+- `aegis-db::apply_migrations` now applies 001 → 006.
+- `aegis-update` `build.rs` embeds an `asInvoker` manifest into its test/bench
+  binaries to bypass Windows UAC installer-detection (name contains "update").
+
+### Verified
+- `cargo test -p aegis-update`: 17/17 pass; `cargo test -p aegis-service`: 12/12.
+- `cargo clippy --workspace --all-targets --all-features --exclude aegis-tauri
+  -- -D warnings`: clean.
+- Benchmark (release, 8 MiB): download+verify 17 ms (~470 MiB/s), install 17.6 ms,
+  SHA-256 ~1,725 MiB/s.
+
 ## Unreleased - Phase 7: Real-Time Protection — VERIFIED
 
 ### Added

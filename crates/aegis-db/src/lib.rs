@@ -11,6 +11,7 @@ const MIGRATIONS: &[(i64, &str, &str)] = &[
     (3, "003_quarantine", include_str!("../../../migrations/003_quarantine.sql")),
     (4, "004_service", include_str!("../../../migrations/004_service.sql")),
     (5, "005_realtime", include_str!("../../../migrations/005_realtime.sql")),
+    (6, "006_update", include_str!("../../../migrations/006_update.sql")),
 ];
 
 #[derive(Debug, Error)]

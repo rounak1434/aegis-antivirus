@@ -1,36 +1,27 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
+//! Aegis secure update system.
+//!
+//! Downloads, **cryptographically verifies**, installs, and rolls back updates
+//! for signatures, YARA rules, threat metadata, and engine configuration. Every
+//! payload is gated by SHA-256 integrity + an Ed25519 signature over a canonical
+//! manifest message, with anti-rollback and minimum-app-version checks.
+//!
+//! This crate only produces verified files on disk and records what's installed;
+//! reloading the running engines from those files is the service's job (no
+//! engine crate is modified here).
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UpdateManifest {
-    pub channel: String,
-    pub bundle_version: String,
-    pub manifest_hash: String,
-    pub signature: String,
-    pub published_at_utc: DateTime<Utc>,
-}
+mod db;
+mod download;
+mod engine;
+mod manifest;
+mod scheduler;
+mod storage;
+mod verify;
+mod version;
 
-#[derive(Debug, Error)]
-pub enum UpdateError {
-    #[error("update manifest is missing {0}")]
-    MissingField(&'static str),
-}
-
-impl UpdateManifest {
-    pub fn validate_metadata(&self) -> Result<(), UpdateError> {
-        if self.channel.trim().is_empty() {
-            return Err(UpdateError::MissingField("channel"));
-        }
-        if self.bundle_version.trim().is_empty() {
-            return Err(UpdateError::MissingField("bundle_version"));
-        }
-        if self.manifest_hash.trim().is_empty() {
-            return Err(UpdateError::MissingField("manifest_hash"));
-        }
-        if self.signature.trim().is_empty() {
-            return Err(UpdateError::MissingField("signature"));
-        }
-        Ok(())
-    }
-}
+pub use download::{DownloadError, Fetcher, LocalFetcher, ReqwestFetcher};
+pub use engine::{InstallOutcome, UpdateEngine, UpdateError};
+pub use manifest::{UpdateComponent, UpdateManifest};
+pub use scheduler::UpdateSchedule;
+pub use storage::{StorageError, UpdateStorage};
+pub use verify::{sha256_hex, UpdateVerifier, VerifyError};
+pub use version::{at_least, compare, is_newer};
