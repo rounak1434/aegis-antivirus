@@ -34,7 +34,11 @@ pub fn get_service_health(state: tauri::State<'_, AppState>) -> ServiceHealth {
 // ---- scanning -----------------------------------------------------------
 
 #[tauri::command]
-pub fn start_scan(state: tauri::State<'_, AppState>, mode: String, roots: Vec<String>) -> R<String> {
+pub fn start_scan(
+    state: tauri::State<'_, AppState>,
+    mode: String,
+    roots: Vec<String>,
+) -> R<String> {
     let mode: ScanMode = parse_enum(&mode)?;
     let roots = roots.into_iter().map(std::path::PathBuf::from).collect();
     state.orch.start_scan(roots, mode).map_err(err)
@@ -70,14 +74,27 @@ pub fn list_quarantine(state: tauri::State<'_, AppState>) -> R<Vec<QuarantineRec
 }
 
 #[tauri::command]
-pub fn quarantine_detection(state: tauri::State<'_, AppState>, detection: ThreatDetection) -> R<QuarantineRecord> {
-    state.orch.quarantine_detection(&detection, "ui").map_err(err)
+pub fn quarantine_detection(
+    state: tauri::State<'_, AppState>,
+    detection: ThreatDetection,
+) -> R<QuarantineRecord> {
+    state
+        .orch
+        .quarantine_detection(&detection, "ui")
+        .map_err(err)
 }
 
 #[tauri::command]
-pub fn restore_file(state: tauri::State<'_, AppState>, id: String, dest: Option<String>) -> R<String> {
+pub fn restore_file(
+    state: tauri::State<'_, AppState>,
+    id: String,
+    dest: Option<String>,
+) -> R<String> {
     let dest = dest.map(std::path::PathBuf::from);
-    state.orch.restore_file(&id, dest.as_deref(), "ui").map_err(err)
+    state
+        .orch
+        .restore_file(&id, dest.as_deref(), "ui")
+        .map_err(err)
 }
 
 #[tauri::command]
@@ -113,7 +130,10 @@ pub fn get_realtime_status(state: tauri::State<'_, AppState>) -> RealtimeStatus 
 // ---- secure updates -----------------------------------------------------
 
 #[tauri::command]
-pub fn check_updates(state: tauri::State<'_, AppState>, available: Vec<UpdateManifest>) -> R<Vec<UpdateManifest>> {
+pub fn check_updates(
+    state: tauri::State<'_, AppState>,
+    available: Vec<UpdateManifest>,
+) -> R<Vec<UpdateManifest>> {
     state.orch.check_updates(&available).map_err(err)
 }
 
@@ -123,7 +143,10 @@ pub fn download_updates(state: tauri::State<'_, AppState>, manifest: UpdateManif
 }
 
 #[tauri::command]
-pub fn install_updates(state: tauri::State<'_, AppState>, manifest: UpdateManifest) -> R<InstallOutcome> {
+pub fn install_updates(
+    state: tauri::State<'_, AppState>,
+    manifest: UpdateManifest,
+) -> R<InstallOutcome> {
     state.orch.install_updates(&manifest).map_err(err)
 }
 

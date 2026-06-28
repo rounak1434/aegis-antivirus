@@ -58,7 +58,11 @@ pub fn upsert_job(conn: &Connection, job: &JobState) -> Result<(), ServiceError>
     Ok(())
 }
 
-pub fn set_state(conn: &Connection, key: &str, value: &serde_json::Value) -> Result<(), ServiceError> {
+pub fn set_state(
+    conn: &Connection,
+    key: &str,
+    value: &serde_json::Value,
+) -> Result<(), ServiceError> {
     conn.execute(
         "INSERT INTO service_state (key, value_json, updated_at_utc) VALUES (?1, ?2, ?3)
          ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at_utc = excluded.updated_at_utc",
@@ -68,7 +72,10 @@ pub fn set_state(conn: &Connection, key: &str, value: &serde_json::Value) -> Res
 }
 
 /// Read detection results back into `ThreatDetection`s (highest score first).
-pub fn list_detections(conn: &Connection, limit: usize) -> Result<Vec<ThreatDetection>, ServiceError> {
+pub fn list_detections(
+    conn: &Connection,
+    limit: usize,
+) -> Result<Vec<ThreatDetection>, ServiceError> {
     let mut stmt = conn.prepare(
         "SELECT id, path, threat_level, score, evidence_json, detected_at_utc
          FROM detection_results ORDER BY score DESC, detected_at_utc DESC LIMIT ?1",
@@ -89,7 +96,8 @@ pub fn list_detections(conn: &Connection, limit: usize) -> Result<Vec<ThreatDete
         let (id, path, level_s, score, evidence_json, ts) = row?;
         let threat_level: ThreatLevel =
             serde_json::from_str(&format!("\"{level_s}\"")).unwrap_or(ThreatLevel::Safe);
-        let evidence: Vec<ThreatEvidence> = serde_json::from_str(&evidence_json).unwrap_or_default();
+        let evidence: Vec<ThreatEvidence> =
+            serde_json::from_str(&evidence_json).unwrap_or_default();
         let timestamp = chrono::DateTime::parse_from_rfc3339(&ts)
             .map(|d| d.with_timezone(&Utc))
             .unwrap_or_else(|_| Utc::now());

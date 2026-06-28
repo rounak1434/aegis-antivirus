@@ -20,7 +20,10 @@ pub enum VerifyError {
     #[error("hash mismatch: file does not match manifest sha256")]
     HashMismatch,
     #[error("rollback rejected: candidate {candidate} is not newer than installed {installed}")]
-    Rollback { candidate: String, installed: String },
+    Rollback {
+        candidate: String,
+        installed: String,
+    },
     #[error("app too old: update needs app >= {required}, have {have}")]
     AppTooOld { required: String, have: String },
 }
@@ -70,7 +73,11 @@ impl UpdateVerifier {
     }
 
     /// Verify a downloaded payload's SHA-256 matches the manifest.
-    pub fn verify_payload(&self, manifest: &UpdateManifest, data: &[u8]) -> Result<(), VerifyError> {
+    pub fn verify_payload(
+        &self,
+        manifest: &UpdateManifest,
+        data: &[u8],
+    ) -> Result<(), VerifyError> {
         if sha256_hex(data) == manifest.sha256.to_ascii_lowercase() {
             Ok(())
         } else {
@@ -95,7 +102,11 @@ impl UpdateVerifier {
         Ok(())
     }
 
-    pub fn check_min_app(&self, manifest: &UpdateManifest, app_version: &str) -> Result<(), VerifyError> {
+    pub fn check_min_app(
+        &self,
+        manifest: &UpdateManifest,
+        app_version: &str,
+    ) -> Result<(), VerifyError> {
         if version::at_least(app_version, &manifest.minimum_app_version) {
             Ok(())
         } else {

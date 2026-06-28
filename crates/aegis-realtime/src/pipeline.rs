@@ -13,9 +13,7 @@ use aegis_yara::RuleManager;
 use chrono::Utc;
 
 use crate::db;
-use crate::model::{
-    FileEvent, ProcessEvent, ProtectionMode, RealtimeAction, RealtimeAlert,
-};
+use crate::model::{FileEvent, ProcessEvent, ProtectionMode, RealtimeAction, RealtimeAlert};
 use crate::policy::decide;
 
 const TEMP_MARKERS: &[&str] = &[
@@ -85,7 +83,11 @@ impl RealtimeEngine {
         let detection = {
             let sig = self.signatures.lock().unwrap();
             let yara = self.yara.lock().unwrap();
-            let yara_ref = if yara.is_compiled() { Some(&*yara) } else { None };
+            let yara_ref = if yara.is_compiled() {
+                Some(&*yara)
+            } else {
+                None
+            };
             DetectionEngine::new().analyze(&scanned, &sig, yara_ref)?
         };
 
@@ -171,7 +173,11 @@ fn process_evidence(ev: &ProcessEvent) -> Vec<ThreatEvidence> {
         });
     }
     if let Some((file_name, decoy_ext, real_ext)) = dh::double_extension(path) {
-        evidence.push(ThreatEvidence::DoubleExtension { file_name, decoy_ext, real_ext });
+        evidence.push(ThreatEvidence::DoubleExtension {
+            file_name,
+            decoy_ext,
+            real_ext,
+        });
     }
     if let Some(ext) = dh::suspicious_extension(path) {
         evidence.push(ThreatEvidence::SuspiciousExtension { ext });

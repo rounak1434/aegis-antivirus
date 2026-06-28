@@ -57,7 +57,10 @@ pub fn upsert_installed(
 }
 
 /// Currently installed version of a component, if any.
-pub fn installed_version(conn: &Connection, component: UpdateComponent) -> DbResult<Option<String>> {
+pub fn installed_version(
+    conn: &Connection,
+    component: UpdateComponent,
+) -> DbResult<Option<String>> {
     conn.query_row(
         "SELECT version FROM installed_components WHERE component = ?1",
         params![component.as_str()],
@@ -68,7 +71,8 @@ pub fn installed_version(conn: &Connection, component: UpdateComponent) -> DbRes
 
 /// (component, version) for every installed component.
 pub fn list_installed(conn: &Connection) -> DbResult<Vec<(String, String)>> {
-    let mut stmt = conn.prepare("SELECT component, version FROM installed_components ORDER BY component")?;
+    let mut stmt =
+        conn.prepare("SELECT component, version FROM installed_components ORDER BY component")?;
     let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
     rows.collect()
 }

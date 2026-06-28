@@ -67,20 +67,35 @@ fn detects_all_layers_end_to_end() {
     // Hash match → Critical.
     let evil = by_name("evil.bin").expect("evil.bin detected");
     assert_eq!(evil.threat_level, ThreatLevel::Critical);
-    assert!(evil.evidence.iter().any(|e| matches!(e, ThreatEvidence::HashMatch { .. })));
+    assert!(evil
+        .evidence
+        .iter()
+        .any(|e| matches!(e, ThreatEvidence::HashMatch { .. })));
 
     // Double extension.
     let dbl = by_name("invoice.pdf.exe").expect("double-ext detected");
-    assert!(dbl.evidence.iter().any(|e| matches!(e, ThreatEvidence::DoubleExtension { .. })));
+    assert!(dbl
+        .evidence
+        .iter()
+        .any(|e| matches!(e, ThreatEvidence::DoubleExtension { .. })));
 
     // PowerShell + suspicious extension on the .ps1.
     let ps = by_name("update.ps1").expect("ps1 detected");
-    assert!(ps.evidence.iter().any(|e| matches!(e, ThreatEvidence::PowerShellIndicator { .. })));
-    assert!(ps.evidence.iter().any(|e| matches!(e, ThreatEvidence::SuspiciousExtension { .. })));
+    assert!(ps
+        .evidence
+        .iter()
+        .any(|e| matches!(e, ThreatEvidence::PowerShellIndicator { .. })));
+    assert!(ps
+        .evidence
+        .iter()
+        .any(|e| matches!(e, ThreatEvidence::SuspiciousExtension { .. })));
 
     // YARA match.
     let marker = by_name("marker.dat").expect("yara detected");
-    assert!(marker.evidence.iter().any(|e| matches!(e, ThreatEvidence::YaraMatch { .. })));
+    assert!(marker
+        .evidence
+        .iter()
+        .any(|e| matches!(e, ThreatEvidence::YaraMatch { .. })));
 
     // Clean file is not reported.
     assert!(by_name("clean.txt").is_none());
@@ -141,8 +156,9 @@ fn score_accumulates_and_clamps() {
         real_ext: "ps1".into(),
     });
     all.push(ThreatEvidence::SuspiciousExtension { ext: "ps1".into() });
-    let det = aegis_detect::ThreatDetection::from_evidence("invoice.pdf.ps1", all, chrono::Utc::now())
-        .unwrap();
+    let det =
+        aegis_detect::ThreatDetection::from_evidence("invoice.pdf.ps1", all, chrono::Utc::now())
+            .unwrap();
     assert!(det.score <= 100);
     assert!(det.score >= 60, "expected High+, got {}", det.score);
 }

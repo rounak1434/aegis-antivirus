@@ -37,12 +37,21 @@ fn fixture(mode: ProtectionMode) -> Fixture {
         db_path.clone(),
         mode,
     );
-    Fixture { engine, signatures, db_path, _data: data, work }
+    Fixture {
+        engine,
+        signatures,
+        db_path,
+        _data: data,
+        work,
+    }
 }
 
 fn sha256_of(path: &Path) -> String {
     use sha2::{Digest, Sha256};
-    Sha256::digest(fs::read(path).unwrap()).iter().map(|b| format!("{b:02x}")).collect()
+    Sha256::digest(fs::read(path).unwrap())
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 #[test]
@@ -53,7 +62,10 @@ fn malicious_file_event_raises_notify_alert() {
 
     let alert = fx
         .engine
-        .handle_file_event(&FileEvent { kind: FileEventKind::Create, path: p.display().to_string() })
+        .handle_file_event(&FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string(),
+        })
         .expect("alert");
     assert_eq!(alert.action, RealtimeAction::Notified);
     assert!(alert.path.as_deref().unwrap().contains("dropper.ps1"));
@@ -68,7 +80,10 @@ fn clean_file_event_no_alert() {
     fs::write(&p, b"perfectly benign text").unwrap();
     assert!(fx
         .engine
-        .handle_file_event(&FileEvent { kind: FileEventKind::Create, path: p.display().to_string() })
+        .handle_file_event(&FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string()
+        })
         .is_none());
     assert_eq!(fx.engine.alerts_raised(), 0);
 }
@@ -79,11 +94,17 @@ fn auto_quarantine_isolates_known_bad_file() {
     let p = fx.work.path().join("malware.bin");
     fs::write(&p, b"known bad sample").unwrap();
     // Make it a signature hit ⇒ Critical ⇒ auto-quarantine.
-    fx.signatures.lock().unwrap().insert(HashAlgo::Sha256, &sha256_of(&p));
+    fx.signatures
+        .lock()
+        .unwrap()
+        .insert(HashAlgo::Sha256, &sha256_of(&p));
 
     let alert = fx
         .engine
-        .handle_file_event(&FileEvent { kind: FileEventKind::Create, path: p.display().to_string() })
+        .handle_file_event(&FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string(),
+        })
         .expect("alert");
     assert_eq!(alert.threat_level, ThreatLevel::Critical);
     assert_eq!(alert.action, RealtimeAction::Quarantined);
@@ -91,7 +112,11 @@ fn auto_quarantine_isolates_known_bad_file() {
 
     let count: i64 = aegis_db::open_database(&fx.db_path)
         .unwrap()
-        .query_row("SELECT COUNT(*) FROM realtime_alerts WHERE action='quarantined'", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM realtime_alerts WHERE action='quarantined'",
+            [],
+            |r| r.get(0),
+        )
         .unwrap();
     assert_eq!(count, 1);
 }
@@ -103,9 +128,15 @@ fn auto_quarantine_only_high_or_critical() {
     fs::write(&p, b"powershell start; some script body").unwrap(); // script(10)+ext ps1(15)=25 Low
     let alert = fx
         .engine
-        .handle_file_event(&FileEvent { kind: FileEventKind::Create, path: p.display().to_string() })
+        .handle_file_event(&FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string(),
+        })
         .expect("alert");
-    assert!(matches!(alert.threat_level, ThreatLevel::Low | ThreatLevel::Medium));
+    assert!(matches!(
+        alert.threat_level,
+        ThreatLevel::Low | ThreatLevel::Medium
+    ));
     assert_eq!(alert.action, RealtimeAction::Notified); // below High ⇒ not quarantined
     assert!(p.exists());
 }
@@ -148,7 +179,10 @@ fn monitor_only_logs_without_acting() {
     fs::write(&p, b"powershell -enc AAAA IEX").unwrap();
     let alert = fx
         .engine
-        .handle_file_event(&FileEvent { kind: FileEventKind::Create, path: p.display().to_string() })
+        .handle_file_event(&FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string(),
+        })
         .expect("alert");
     assert_eq!(alert.action, RealtimeAction::Monitored);
     assert!(p.exists());

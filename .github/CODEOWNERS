@@ -1,0 +1,14 @@
+# Default owner for everything in the repo.
+* @rounak1434
+
+# Engine crates — changes here need extra care (verified, do-not-break).
+/crates/ @rounak1434
+
+# CI / build / security config.
+/.github/ @rounak1434
+/deny.toml @rounak1434
+
+# Security policy + update system.
+/SECURITY.md @rounak1434
+/crates/aegis-update/ @rounak1434
+/crates/aegis-quarantine/ @rounak1434

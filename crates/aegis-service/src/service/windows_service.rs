@@ -11,7 +11,9 @@ pub struct WindowsSecurityService {
 
 impl WindowsSecurityService {
     pub fn new() -> Self {
-        Self { scanner: WindowsScanner::new() }
+        Self {
+            scanner: WindowsScanner::new(),
+        }
     }
 
     /// Collect every persistence surface and return suspicious detections.

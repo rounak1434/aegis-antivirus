@@ -1,0 +1,33 @@
+name: Release (draft)
+
+# DRAFT-ONLY release workflow. On a version tag (or manual dispatch) it opens a
+# GitHub release draft with auto-generated notes. It intentionally does NOT build
+# installers, MSI packages, or sign binaries — that is a later phase. A
+# maintainer reviews and publishes the draft manually.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    name: open release draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          name: ${{ github.ref_name }}
+          body: |
+            Draft release for ${{ github.ref_name }}.
+
+            > Installers and signed artifacts are added by the packaging phase
+            > (not yet implemented). Review the auto-generated notes, attach
+            > artifacts when available, then publish.

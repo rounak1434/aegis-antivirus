@@ -24,21 +24,42 @@ mod tests {
 
     #[test]
     fn monitor_only_never_acts() {
-        assert_eq!(decide(ProtectionMode::MonitorOnly, ThreatLevel::Critical), RealtimeAction::Monitored);
+        assert_eq!(
+            decide(ProtectionMode::MonitorOnly, ThreatLevel::Critical),
+            RealtimeAction::Monitored
+        );
     }
 
     #[test]
     fn notify_only_always_notifies() {
-        assert_eq!(decide(ProtectionMode::NotifyOnly, ThreatLevel::Critical), RealtimeAction::Notified);
-        assert_eq!(decide(ProtectionMode::NotifyOnly, ThreatLevel::Low), RealtimeAction::Notified);
+        assert_eq!(
+            decide(ProtectionMode::NotifyOnly, ThreatLevel::Critical),
+            RealtimeAction::Notified
+        );
+        assert_eq!(
+            decide(ProtectionMode::NotifyOnly, ThreatLevel::Low),
+            RealtimeAction::Notified
+        );
     }
 
     #[test]
     fn auto_quarantine_thresholds() {
-        assert_eq!(decide(ProtectionMode::AutoQuarantine, ThreatLevel::Critical), RealtimeAction::Quarantined);
-        assert_eq!(decide(ProtectionMode::AutoQuarantine, ThreatLevel::High), RealtimeAction::Quarantined);
-        assert_eq!(decide(ProtectionMode::AutoQuarantine, ThreatLevel::Medium), RealtimeAction::Notified);
-        assert_eq!(decide(ProtectionMode::AutoQuarantine, ThreatLevel::Low), RealtimeAction::Notified);
+        assert_eq!(
+            decide(ProtectionMode::AutoQuarantine, ThreatLevel::Critical),
+            RealtimeAction::Quarantined
+        );
+        assert_eq!(
+            decide(ProtectionMode::AutoQuarantine, ThreatLevel::High),
+            RealtimeAction::Quarantined
+        );
+        assert_eq!(
+            decide(ProtectionMode::AutoQuarantine, ThreatLevel::Medium),
+            RealtimeAction::Notified
+        );
+        assert_eq!(
+            decide(ProtectionMode::AutoQuarantine, ThreatLevel::Low),
+            RealtimeAction::Notified
+        );
     }
 
     #[test]

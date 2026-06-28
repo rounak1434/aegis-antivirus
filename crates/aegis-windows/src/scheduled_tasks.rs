@@ -27,7 +27,10 @@ pub fn parse_schtasks_csv(text: &str) -> Vec<PersistenceEntry> {
         if run.eq_ignore_ascii_case("N/A") || run.is_empty() {
             continue;
         }
-        let author = author_col.and_then(|i| row.get(i)).map(String::as_str).unwrap_or("");
+        let author = author_col
+            .and_then(|i| row.get(i))
+            .map(String::as_str)
+            .unwrap_or("");
         entries.push(
             PersistenceEntry::new(PersistenceKind::ScheduledTask, name, run, "Task Scheduler")
                 .with_detail(format!("author: {author}")),
@@ -43,9 +46,7 @@ pub fn collect() -> Vec<PersistenceEntry> {
         .args(["/query", "/fo", "CSV", "/v"])
         .output();
     match out {
-        Ok(o) if o.status.success() => {
-            parse_schtasks_csv(&String::from_utf8_lossy(&o.stdout))
-        }
+        Ok(o) if o.status.success() => parse_schtasks_csv(&String::from_utf8_lossy(&o.stdout)),
         _ => Vec::new(),
     }
 }

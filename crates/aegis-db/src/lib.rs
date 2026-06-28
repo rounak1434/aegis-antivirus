@@ -6,12 +6,36 @@ use thiserror::Error;
 /// Ordered migration set: (version, name, sql). Applied in order; each is
 /// recorded in `schema_migrations` and skipped if already present.
 const MIGRATIONS: &[(i64, &str, &str)] = &[
-    (1, "001_initial", include_str!("../../../migrations/001_initial.sql")),
-    (2, "002_detection", include_str!("../../../migrations/002_detection.sql")),
-    (3, "003_quarantine", include_str!("../../../migrations/003_quarantine.sql")),
-    (4, "004_service", include_str!("../../../migrations/004_service.sql")),
-    (5, "005_realtime", include_str!("../../../migrations/005_realtime.sql")),
-    (6, "006_update", include_str!("../../../migrations/006_update.sql")),
+    (
+        1,
+        "001_initial",
+        include_str!("../../../migrations/001_initial.sql"),
+    ),
+    (
+        2,
+        "002_detection",
+        include_str!("../../../migrations/002_detection.sql"),
+    ),
+    (
+        3,
+        "003_quarantine",
+        include_str!("../../../migrations/003_quarantine.sql"),
+    ),
+    (
+        4,
+        "004_service",
+        include_str!("../../../migrations/004_service.sql"),
+    ),
+    (
+        5,
+        "005_realtime",
+        include_str!("../../../migrations/005_realtime.sql"),
+    ),
+    (
+        6,
+        "006_update",
+        include_str!("../../../migrations/006_update.sql"),
+    ),
 ];
 
 #[derive(Debug, Error)]
@@ -76,7 +100,11 @@ mod tests {
         let mut conn = open_in_memory_database().expect("open in-memory database");
         apply_migrations(&mut conn).expect("apply migrations");
         let count: i64 = conn
-            .query_row("SELECT COUNT(*) FROM schema_migrations WHERE version = 1", [], |row| row.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM schema_migrations WHERE version = 1",
+                [],
+                |row| row.get(0),
+            )
             .expect("read migration row");
         assert_eq!(count, 1);
     }

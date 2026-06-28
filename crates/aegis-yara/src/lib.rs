@@ -128,8 +128,11 @@ impl RuleManager {
     pub fn reload_rules(&mut self) -> Result<(), YaraError> {
         let dirs = self.dirs.clone();
         // Keep only string-origin sources (those not from a tracked dir file).
-        self.sources
-            .retain(|(origin, _)| !dirs.iter().any(|d| origin.starts_with(&d.display().to_string())));
+        self.sources.retain(|(origin, _)| {
+            !dirs
+                .iter()
+                .any(|d| origin.starts_with(&d.display().to_string()))
+        });
         for dir in &dirs {
             self.read_dir(dir)?;
         }

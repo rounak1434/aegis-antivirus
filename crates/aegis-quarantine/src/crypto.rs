@@ -72,7 +72,9 @@ impl VaultKey {
             b
         };
         let key = Key::<Aes256Gcm>::from_slice(&bytes);
-        Ok(Self { cipher: Aes256Gcm::new(key) })
+        Ok(Self {
+            cipher: Aes256Gcm::new(key),
+        })
     }
 
     /// Build a key directly from raw bytes (tests / key import).
@@ -81,7 +83,9 @@ impl VaultKey {
             return Err(CryptoError::BadKey(bytes.len()));
         }
         let key = Key::<Aes256Gcm>::from_slice(bytes);
-        Ok(Self { cipher: Aes256Gcm::new(key) })
+        Ok(Self {
+            cipher: Aes256Gcm::new(key),
+        })
     }
 
     /// Encrypt `plaintext` → `nonce || ciphertext`.

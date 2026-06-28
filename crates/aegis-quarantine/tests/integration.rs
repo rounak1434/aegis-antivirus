@@ -17,7 +17,11 @@ fn fixture() -> Fixture {
     let mut conn = aegis_db::open_in_memory_database().unwrap();
     aegis_db::apply_migrations(&mut conn).unwrap();
     let vault = Vault::open(vault_dir.path(), conn).unwrap();
-    Fixture { vault, _vault_dir: vault_dir, work }
+    Fixture {
+        vault,
+        _vault_dir: vault_dir,
+        work,
+    }
 }
 
 fn plant(dir: &Path, name: &str, content: &[u8]) -> PathBuf {
@@ -70,7 +74,10 @@ fn restore_round_trips_content() {
 fn delete_shreds_vault_file() {
     let fx = fixture();
     let file = plant(fx.work.path(), "x.scr", b"payload");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::Medium, "ext", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::Medium, "ext", "tester")
+        .unwrap();
     assert!(Path::new(&rec.quarantine_path).exists());
 
     fx.vault.delete_file(&rec.id, "tester").unwrap();
@@ -85,7 +92,10 @@ fn delete_shreds_vault_file() {
 fn integrity_mismatch_blocks_restore() {
     let fx = fixture();
     let file = plant(fx.work.path(), "a.bin", b"content");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::High, "r", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::High, "r", "tester")
+        .unwrap();
 
     // Corrupt the recorded digest so decrypted content won't match.
     fx.vault
@@ -104,7 +114,10 @@ fn integrity_mismatch_blocks_restore() {
 fn tampered_ciphertext_fails_to_decrypt() {
     let fx = fixture();
     let file = plant(fx.work.path(), "b.bin", b"content");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::High, "r", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::High, "r", "tester")
+        .unwrap();
 
     // Flip a byte in the encrypted blob → GCM auth tag rejects it.
     let mut blob = fs::read(&rec.quarantine_path).unwrap();
@@ -129,7 +142,10 @@ fn quarantine_missing_file_errors() {
 #[test]
 fn restore_unknown_record_errors() {
     let fx = fixture();
-    let err = fx.vault.restore_file("no-such-id", None, "tester").unwrap_err();
+    let err = fx
+        .vault
+        .restore_file("no-such-id", None, "tester")
+        .unwrap_err();
     assert!(matches!(err, QuarantineError::NotFound(_)));
 }
 
@@ -137,20 +153,32 @@ fn restore_unknown_record_errors() {
 fn path_traversal_and_overwrite_rejected() {
     let fx = fixture();
     let file = plant(fx.work.path(), "c.bin", b"data");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::High, "r", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::High, "r", "tester")
+        .unwrap();
 
     // Relative path rejected.
-    let rel = fx.vault.restore_file(&rec.id, Some(Path::new("rel.bin")), "tester").unwrap_err();
+    let rel = fx
+        .vault
+        .restore_file(&rec.id, Some(Path::new("rel.bin")), "tester")
+        .unwrap_err();
     assert!(matches!(rel, QuarantineError::UnsafePath(_)));
 
     // Parent-dir traversal rejected.
     let trav = fx.work.path().join("..").join("escape.bin");
-    let t = fx.vault.restore_file(&rec.id, Some(&trav), "tester").unwrap_err();
+    let t = fx
+        .vault
+        .restore_file(&rec.id, Some(&trav), "tester")
+        .unwrap_err();
     assert!(matches!(t, QuarantineError::UnsafePath(_)));
 
     // Overwrite of an existing file rejected.
     let existing = plant(fx.work.path(), "existing.bin", b"keep me");
-    let ov = fx.vault.restore_file(&rec.id, Some(&existing), "tester").unwrap_err();
+    let ov = fx
+        .vault
+        .restore_file(&rec.id, Some(&existing), "tester")
+        .unwrap_err();
     assert!(matches!(ov, QuarantineError::TargetExists(_)));
     assert_eq!(fs::read(&existing).unwrap(), b"keep me"); // untouched
 }
@@ -159,7 +187,10 @@ fn path_traversal_and_overwrite_rejected() {
 fn double_restore_blocked() {
     let fx = fixture();
     let file = plant(fx.work.path(), "d.bin", b"data");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::High, "r", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::High, "r", "tester")
+        .unwrap();
     fx.vault.restore_file(&rec.id, None, "tester").unwrap();
     let err = fx.vault.restore_file(&rec.id, None, "tester").unwrap_err();
     assert!(matches!(err, QuarantineError::NotInVault { .. }));
@@ -169,7 +200,10 @@ fn double_restore_blocked() {
 fn audit_log_records_actions() {
     let fx = fixture();
     let file = plant(fx.work.path(), "e.bin", b"data");
-    let rec = fx.vault.quarantine_file(&file, ThreatLevel::High, "r", "tester").unwrap();
+    let rec = fx
+        .vault
+        .quarantine_file(&file, ThreatLevel::High, "r", "tester")
+        .unwrap();
     fx.vault.delete_file(&rec.id, "tester").unwrap();
 
     let count: i64 = fx

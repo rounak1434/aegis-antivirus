@@ -79,7 +79,11 @@ impl UpdateEngine {
                 continue;
             }
             let installed = db::installed_version(&conn, m.component)?;
-            if self.verifier.check_rollback(m, installed.as_deref()).is_ok() {
+            if self
+                .verifier
+                .check_rollback(m, installed.as_deref())
+                .is_ok()
+            {
                 applicable.push(m.clone());
             }
         }
@@ -98,7 +102,13 @@ impl UpdateEngine {
             return Err(e.into());
         }
         let conn = self.conn()?;
-        db::record_history(&conn, manifest.component, &manifest.version, &manifest.sha256, "downloaded")?;
+        db::record_history(
+            &conn,
+            manifest.component,
+            &manifest.version,
+            &manifest.sha256,
+            "downloaded",
+        )?;
         Ok(dest)
     }
 
@@ -112,14 +122,24 @@ impl UpdateEngine {
         self.verifier
             .verify_full(manifest, &bytes, installed.as_deref(), &self.app_version)?;
 
-        let prev = self.storage.read_manifest()?.get(manifest.component.as_str()).cloned();
+        let prev = self
+            .storage
+            .read_manifest()?
+            .get(manifest.component.as_str())
+            .cloned();
         let live = self.storage.install(manifest, &dest)?;
         if let Some(p) = prev {
             self.storage.write_prev(&p)?;
         }
         self.storage.write_installed(manifest)?;
         db::upsert_installed(&conn, manifest, &live.display().to_string())?;
-        db::record_history(&conn, manifest.component, &manifest.version, &manifest.sha256, "installed")?;
+        db::record_history(
+            &conn,
+            manifest.component,
+            &manifest.version,
+            &manifest.sha256,
+            "installed",
+        )?;
         Ok(InstallOutcome {
             component: manifest.component,
             version: manifest.version.clone(),
@@ -138,7 +158,11 @@ impl UpdateEngine {
         let conn = self.conn()?;
         db::upsert_installed(&conn, &prev, &live.display().to_string())?;
         db::record_history(&conn, component, &prev.version, &prev.sha256, "rolled_back")?;
-        Ok(InstallOutcome { component, version: prev.version, installed_path: live })
+        Ok(InstallOutcome {
+            component,
+            version: prev.version,
+            installed_path: live,
+        })
     }
 
     /// (component, version) for every installed component.

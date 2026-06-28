@@ -1,0 +1,35 @@
+name: CI
+
+# Entry workflow for every push to main and every pull request. Fans out to the
+# reusable Rust, Frontend, and Security workflows — a PR is green only when all
+# three pass (the quality gate).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    uses: ./.github/workflows/rust.yml
+
+  frontend:
+    uses: ./.github/workflows/frontend.yml
+
+  security:
+    uses: ./.github/workflows/security.yml
+    secrets: inherit
+
+  gate:
+    name: quality gate
+    needs: [rust, frontend, security]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All quality gates passed."

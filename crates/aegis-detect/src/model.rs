@@ -15,15 +15,27 @@ pub use aegis_common::ThreatLevel;
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ThreatEvidence {
     /// File digest matched a known-bad signature.
-    HashMatch { algo: String, hex: String, threat_name: Option<String> },
+    HashMatch {
+        algo: String,
+        hex: String,
+        threat_name: Option<String>,
+    },
     /// A compiled YARA rule matched.
-    YaraMatch { rule: String, namespace: String, patterns: Vec<String> },
+    YaraMatch {
+        rule: String,
+        namespace: String,
+        patterns: Vec<String>,
+    },
     /// Shannon entropy exceeded the high-entropy threshold.
     EntropyDetection { entropy: f64 },
     /// High-entropy executable — likely packed/encrypted payload.
     PackedExecutable { entropy: f64 },
     /// Decoy double extension, e.g. `invoice.pdf.exe`.
-    DoubleExtension { file_name: String, decoy_ext: String, real_ext: String },
+    DoubleExtension {
+        file_name: String,
+        decoy_ext: String,
+        real_ext: String,
+    },
     /// File carries a dangerous extension.
     SuspiciousExtension { ext: String },
     /// Script-host indicator string found in content.
@@ -33,7 +45,11 @@ pub enum ThreatEvidence {
     /// A Windows persistence mechanism (startup, registry Run key, scheduled
     /// task, service, driver, browser extension, hosts file). Added in Phase 5
     /// so the Windows scanner emits uniform `ThreatDetection`s.
-    PersistenceMechanism { mechanism: String, name: String, detail: String },
+    PersistenceMechanism {
+        mechanism: String,
+        name: String,
+        detail: String,
+    },
     /// A file/command located somewhere suspicious (temp dir, startup folder,
     /// unsigned binary, suspicious command line).
     SuspiciousLocation { path: String, reason: String },
@@ -59,11 +75,19 @@ impl ThreatEvidence {
     /// Human-readable explanation of why this evidence fired.
     pub fn reason(&self) -> String {
         match self {
-            ThreatEvidence::HashMatch { algo, hex, threat_name } => match threat_name {
+            ThreatEvidence::HashMatch {
+                algo,
+                hex,
+                threat_name,
+            } => match threat_name {
                 Some(n) => format!("{algo} digest {hex} matches known threat {n}"),
                 None => format!("{algo} digest {hex} matches a known-bad signature"),
             },
-            ThreatEvidence::YaraMatch { rule, namespace, patterns } => format!(
+            ThreatEvidence::YaraMatch {
+                rule,
+                namespace,
+                patterns,
+            } => format!(
                 "YARA rule {namespace}:{rule} matched (patterns: {})",
                 patterns.join(", ")
             ),
@@ -73,9 +97,11 @@ impl ThreatEvidence {
             ThreatEvidence::PackedExecutable { entropy } => {
                 format!("executable with high entropy {entropy:.2}/8.0 (likely packed)")
             }
-            ThreatEvidence::DoubleExtension { file_name, decoy_ext, real_ext } => format!(
-                "double extension: {file_name} poses as .{decoy_ext} but is .{real_ext}"
-            ),
+            ThreatEvidence::DoubleExtension {
+                file_name,
+                decoy_ext,
+                real_ext,
+            } => format!("double extension: {file_name} poses as .{decoy_ext} but is .{real_ext}"),
             ThreatEvidence::SuspiciousExtension { ext } => {
                 format!("dangerous file extension .{ext}")
             }
@@ -85,7 +111,11 @@ impl ThreatEvidence {
             ThreatEvidence::PowerShellIndicator { indicator } => {
                 format!("PowerShell abuse indicator: {indicator}")
             }
-            ThreatEvidence::PersistenceMechanism { mechanism, name, detail } => {
+            ThreatEvidence::PersistenceMechanism {
+                mechanism,
+                name,
+                detail,
+            } => {
                 format!("{mechanism} persistence '{name}': {detail}")
             }
             ThreatEvidence::SuspiciousLocation { path, reason } => {
@@ -168,7 +198,15 @@ mod tests {
 
     #[test]
     fn weights_and_clamp() {
-        assert_eq!(ThreatEvidence::HashMatch { algo: "sha256".into(), hex: "x".into(), threat_name: None }.weight(), 100);
+        assert_eq!(
+            ThreatEvidence::HashMatch {
+                algo: "sha256".into(),
+                hex: "x".into(),
+                threat_name: None
+            }
+            .weight(),
+            100
+        );
         assert_eq!(clamp_score(130), 100);
         assert_eq!(clamp_score(45), 45);
     }
@@ -194,7 +232,11 @@ mod tests {
 
     #[test]
     fn hash_match_is_critical() {
-        let ev = vec![ThreatEvidence::HashMatch { algo: "sha256".into(), hex: "ab".into(), threat_name: Some("Wacatac".into()) }];
+        let ev = vec![ThreatEvidence::HashMatch {
+            algo: "sha256".into(),
+            hex: "ab".into(),
+            threat_name: Some("Wacatac".into()),
+        }];
         let d = ThreatDetection::from_evidence("/x", ev, Utc::now()).unwrap();
         assert_eq!(d.score, 100);
         assert_eq!(d.threat_level, ThreatLevel::Critical);

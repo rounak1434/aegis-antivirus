@@ -48,6 +48,14 @@ pub enum ServiceResponse {
 #[serde(tag = "type", content = "payload")]
 pub enum ServiceEvent {
     ServiceStatusChanged(ProtectionStatus),
-    ScanProgress { scan_id: ScanJobId, files_scanned: u64, threats_found: u32 },
-    SecurityNotification { severity: String, title: String, body: String },
+    ScanProgress {
+        scan_id: ScanJobId,
+        files_scanned: u64,
+        threats_found: u32,
+    },
+    SecurityNotification {
+        severity: String,
+        title: String,
+        body: String,
+    },
 }

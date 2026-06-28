@@ -10,22 +10,27 @@ pub const SUSPICIOUS_EXTS: &[&str] = &[
 /// Extensions treated as "executable / runnable" for double-extension and
 /// packed-executable heuristics.
 pub const EXECUTABLE_EXTS: &[&str] = &[
-    "exe", "dll", "scr", "com", "pif", "sys", "bat", "cmd", "hta", "msi", "ps1",
-    "vbs", "js", "jse", "vbe", "wsf",
+    "exe", "dll", "scr", "com", "pif", "sys", "bat", "cmd", "hta", "msi", "ps1", "vbs", "js",
+    "jse", "vbe", "wsf",
 ];
 
 /// Common decoy extensions used to disguise the real one.
 pub const DECOY_EXTS: &[&str] = &[
-    "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "jpg", "jpeg", "png",
-    "gif", "txt", "zip", "rar", "mp3", "mp4", "csv",
+    "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "jpg", "jpeg", "png", "gif", "txt", "zip",
+    "rar", "mp3", "mp4", "csv",
 ];
 
 /// Script-host indicators searched for in content.
 pub const SCRIPT_INDICATORS: &[&str] = &["powershell", "cmd.exe", "wscript", "cscript"];
 
 /// PowerShell abuse indicators searched for in content (matched lowercase).
-pub const POWERSHELL_INDICATORS: &[&str] =
-    &["encodedcommand", "downloadstring", "invoke-expression", "iex", "bypass"];
+pub const POWERSHELL_INDICATORS: &[&str] = &[
+    "encodedcommand",
+    "downloadstring",
+    "invoke-expression",
+    "iex",
+    "bypass",
+];
 
 /// Max bytes of content inspected by the string/entropy heuristics.
 pub const CONTENT_SCAN_LIMIT: usize = 1024 * 1024;
@@ -137,8 +142,14 @@ mod tests {
 
     #[test]
     fn suspicious_ext_detected() {
-        assert_eq!(suspicious_extension(&PathBuf::from("x.scr")).as_deref(), Some("scr"));
-        assert_eq!(suspicious_extension(&PathBuf::from("x.PS1")).as_deref(), Some("ps1"));
+        assert_eq!(
+            suspicious_extension(&PathBuf::from("x.scr")).as_deref(),
+            Some("scr")
+        );
+        assert_eq!(
+            suspicious_extension(&PathBuf::from("x.PS1")).as_deref(),
+            Some("ps1")
+        );
         assert!(suspicious_extension(&PathBuf::from("x.txt")).is_none());
     }
 
@@ -159,7 +170,8 @@ mod tests {
 
     #[test]
     fn indicators_found() {
-        let ps = b"powershell -EncodedCommand ABC; IEX (New-Object Net.WebClient).DownloadString('x')";
+        let ps =
+            b"powershell -EncodedCommand ABC; IEX (New-Object Net.WebClient).DownloadString('x')";
         let s = script_indicators(ps);
         assert!(s.contains(&"powershell".to_string()));
         let p = powershell_indicators(ps);

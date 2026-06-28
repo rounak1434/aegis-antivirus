@@ -11,9 +11,7 @@ use sha2::{Digest, Sha256};
 
 use crate::crypto::VaultKey;
 use crate::db;
-use crate::model::{
-    AuditAction, QuarantineError, QuarantineRecord, QuarantineStatus, ThreatLevel,
-};
+use crate::model::{AuditAction, QuarantineError, QuarantineRecord, QuarantineStatus, ThreatLevel};
 
 const KEY_FILE: &str = "vault.key";
 const VAULT_EXT: &str = "qbin";
@@ -121,7 +119,13 @@ impl Vault {
         // Integrity: decrypted content must match the recorded digest.
         let actual = sha256_hex(&plaintext);
         if actual != record.sha256 {
-            db::write_audit(&self.conn, AuditAction::Restore, actor, id, "integrity_mismatch")?;
+            db::write_audit(
+                &self.conn,
+                AuditAction::Restore,
+                actor,
+                id,
+                "integrity_mismatch",
+            )?;
             return Err(QuarantineError::IntegrityMismatch {
                 id: id.to_string(),
                 expected: record.sha256,
@@ -198,7 +202,10 @@ fn validate_restore_path(target: &Path) -> Result<(), QuarantineError> {
             target.display()
         )));
     }
-    if target.components().any(|c| matches!(c, Component::ParentDir)) {
+    if target
+        .components()
+        .any(|c| matches!(c, Component::ParentDir))
+    {
         return Err(QuarantineError::UnsafePath(format!(
             "{} contains '..'",
             target.display()

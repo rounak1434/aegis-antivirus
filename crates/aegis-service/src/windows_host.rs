@@ -1,10 +1,12 @@
-use aegis_service::runtime::AegisServiceRuntime;
 use aegis_common::SERVICE_NAME;
+use aegis_service::runtime::AegisServiceRuntime;
 use std::ffi::OsString;
 use std::sync::mpsc;
 use std::time::Duration;
 use windows_service::define_windows_service;
-use windows_service::service::{ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType};
+use windows_service::service::{
+    ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType,
+};
 use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 use windows_service::service_dispatcher;
 
@@ -24,14 +26,18 @@ fn service_main(_arguments: Vec<OsString>) {
 
 fn run() -> windows_service::Result<()> {
     let (shutdown_tx, shutdown_rx) = mpsc::channel::<()>();
-    let status_handle = service_control_handler::register(SERVICE_NAME, move |control_event| match control_event {
-        ServiceControl::Stop => {
-            let _ = shutdown_tx.send(());
-            ServiceControlHandlerResult::NoError
-        }
-        ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
-        _ => ServiceControlHandlerResult::NotImplemented,
-    })?;
+    let status_handle =
+        service_control_handler::register(
+            SERVICE_NAME,
+            move |control_event| match control_event {
+                ServiceControl::Stop => {
+                    let _ = shutdown_tx.send(());
+                    ServiceControlHandlerResult::NoError
+                }
+                ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+                _ => ServiceControlHandlerResult::NotImplemented,
+            },
+        )?;
 
     status_handle.set_service_status(ServiceStatus {
         service_type: SERVICE_TYPE,
@@ -43,7 +49,10 @@ fn run() -> windows_service::Result<()> {
         process_id: None,
     })?;
 
-    let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().expect("create Tokio runtime");
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("create Tokio runtime");
     let service = AegisServiceRuntime::new();
     runtime.block_on(service.mark_running());
 

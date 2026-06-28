@@ -58,7 +58,10 @@ fn mock_fixtures_across_all_surfaces() {
     let ext = ext_dir.path().join("aaaabbbbccccdddd").join("1.0");
     std::fs::create_dir_all(&ext).unwrap();
     std::fs::write(ext.join("manifest.json"), r#"{"name":"Sneaky"}"#).unwrap();
-    entries.extend(browser_extensions::scan_chromium_extensions(ext_dir.path(), "Chrome"));
+    entries.extend(browser_extensions::scan_chromium_extensions(
+        ext_dir.path(),
+        "Chrome",
+    ));
 
     // Hosts: sensitive redirect + benign loopback.
     entries.extend(hosts_file::parse_hosts(
@@ -69,7 +72,12 @@ fn mock_fixtures_across_all_surfaces() {
     let dets = scanner.analyze_entries(&entries);
 
     // Exactly the six malicious fixtures should be detected.
-    assert_eq!(dets.len(), 6, "got: {:#?}", dets.iter().map(|d| &d.path).collect::<Vec<_>>());
+    assert_eq!(
+        dets.len(),
+        6,
+        "got: {:#?}",
+        dets.iter().map(|d| &d.path).collect::<Vec<_>>()
+    );
 
     let mechs = mechanisms(&dets);
     for m in [
@@ -97,7 +105,10 @@ fn benign_only_environment_is_clean() {
         PersistenceKind::RegistryRunKey,
         "HKLM\\...\\Run",
         vec![
-            ("SecurityHealth", "C:\\Windows\\System32\\SecurityHealthSystray.exe"),
+            (
+                "SecurityHealth",
+                "C:\\Windows\\System32\\SecurityHealthSystray.exe",
+            ),
             ("RtkAudio", "\"C:\\Program Files\\Realtek\\Audio\\rtk.exe\""),
         ],
     );

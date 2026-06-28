@@ -3,14 +3,20 @@
 use crate::model::{PersistenceEntry, PersistenceKind};
 
 /// Build entries from (value-name, command) pairs found under a Run-style key.
-pub fn entries_from_pairs<I, S>(kind: PersistenceKind, location: &str, pairs: I) -> Vec<PersistenceEntry>
+pub fn entries_from_pairs<I, S>(
+    kind: PersistenceKind,
+    location: &str,
+    pairs: I,
+) -> Vec<PersistenceEntry>
 where
     I: IntoIterator<Item = (S, S)>,
     S: Into<String>,
 {
     pairs
         .into_iter()
-        .map(|(name, cmd)| PersistenceEntry::new(kind, name.into(), cmd.into(), location.to_string()))
+        .map(|(name, cmd)| {
+            PersistenceEntry::new(kind, name.into(), cmd.into(), location.to_string())
+        })
         .collect()
 }
 
@@ -21,10 +27,30 @@ pub fn collect() -> Vec<PersistenceEntry> {
     use winreg::RegKey;
 
     let targets = [
-        (HKEY_CURRENT_USER, "HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\Run", PersistenceKind::RegistryRunKey),
-        (HKEY_LOCAL_MACHINE, "HKLM", "Software\\Microsoft\\Windows\\CurrentVersion\\Run", PersistenceKind::RegistryRunKey),
-        (HKEY_CURRENT_USER, "HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", PersistenceKind::RegistryRunOnce),
-        (HKEY_LOCAL_MACHINE, "HKLM", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", PersistenceKind::RegistryRunOnce),
+        (
+            HKEY_CURRENT_USER,
+            "HKCU",
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            PersistenceKind::RegistryRunKey,
+        ),
+        (
+            HKEY_LOCAL_MACHINE,
+            "HKLM",
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            PersistenceKind::RegistryRunKey,
+        ),
+        (
+            HKEY_CURRENT_USER,
+            "HKCU",
+            "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            PersistenceKind::RegistryRunOnce,
+        ),
+        (
+            HKEY_LOCAL_MACHINE,
+            "HKLM",
+            "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            PersistenceKind::RegistryRunOnce,
+        ),
     ];
 
     let mut out = Vec::new();
@@ -58,7 +84,10 @@ mod tests {
         let e = entries_from_pairs(
             PersistenceKind::RegistryRunKey,
             "HKCU\\...\\Run",
-            vec![("Updater", "C:\\Temp\\u.exe"), ("App", "C:\\Program Files\\app.exe")],
+            vec![
+                ("Updater", "C:\\Temp\\u.exe"),
+                ("App", "C:\\Program Files\\app.exe"),
+            ],
         );
         assert_eq!(e.len(), 2);
         assert_eq!(e[0].kind, PersistenceKind::RegistryRunKey);

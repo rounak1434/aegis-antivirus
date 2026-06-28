@@ -27,7 +27,11 @@ pub struct EngineConfig {
 
 impl Default for EngineConfig {
     fn default() -> Self {
-        Self { packed_entropy_min: 7.0, generic_entropy_min: 7.5, min_entropy_size: 256 }
+        Self {
+            packed_entropy_min: 7.0,
+            generic_entropy_min: 7.5,
+            min_entropy_size: 256,
+        }
     }
 }
 
@@ -77,7 +81,11 @@ impl DetectionEngine {
 
         // 2. Name-based heuristics (no content needed).
         if let Some((file_name, decoy_ext, real_ext)) = heuristics::double_extension(path) {
-            evidence.push(ThreatEvidence::DoubleExtension { file_name, decoy_ext, real_ext });
+            evidence.push(ThreatEvidence::DoubleExtension {
+                file_name,
+                decoy_ext,
+                real_ext,
+            });
         }
         if let Some(ext) = heuristics::suspicious_extension(path) {
             evidence.push(ThreatEvidence::SuspiciousExtension { ext });
@@ -113,7 +121,8 @@ impl DetectionEngine {
 
         if content.len() >= self.config.min_entropy_size {
             let entropy = heuristics::shannon_entropy(content);
-            if heuristics::is_executable(path, content) && entropy >= self.config.packed_entropy_min {
+            if heuristics::is_executable(path, content) && entropy >= self.config.packed_entropy_min
+            {
                 evidence.push(ThreatEvidence::PackedExecutable { entropy });
             } else if entropy >= self.config.generic_entropy_min {
                 evidence.push(ThreatEvidence::EntropyDetection { entropy });
@@ -167,7 +176,10 @@ mod tests {
                 is_hidden: false,
                 is_symlink: false,
             },
-            hashes: Some(FileHashes { sha256: sha.into(), md5: md5.into() }),
+            hashes: Some(FileHashes {
+                sha256: sha.into(),
+                md5: md5.into(),
+            }),
             error: None,
         }
     }
@@ -199,8 +211,12 @@ mod tests {
             &PathBuf::from("update.ps1"),
             b"powershell -EncodedCommand X; IEX (DownloadString)",
         );
-        assert!(ev.iter().any(|e| matches!(e, ThreatEvidence::PowerShellIndicator { .. })));
-        assert!(ev.iter().any(|e| matches!(e, ThreatEvidence::ScriptIndicator { .. })));
+        assert!(ev
+            .iter()
+            .any(|e| matches!(e, ThreatEvidence::PowerShellIndicator { .. })));
+        assert!(ev
+            .iter()
+            .any(|e| matches!(e, ThreatEvidence::ScriptIndicator { .. })));
     }
 
     #[test]
@@ -209,6 +225,8 @@ mod tests {
         let mut content = b"MZ".to_vec();
         content.extend((0..=255u8).cycle().take(8192));
         let ev = engine.content_evidence(&PathBuf::from("a.exe"), &content);
-        assert!(ev.iter().any(|e| matches!(e, ThreatEvidence::PackedExecutable { .. })));
+        assert!(ev
+            .iter()
+            .any(|e| matches!(e, ThreatEvidence::PackedExecutable { .. })));
     }
 }

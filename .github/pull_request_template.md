@@ -18,10 +18,21 @@
 
 ## Checklist
 
-- [ ] `cargo fmt --all` is clean
+CI enforces these on every PR — please run them locally first.
+
+**Required**
+
+- [ ] `cargo fmt --all -- --check` is clean
 - [ ] `cargo clippy --workspace --exclude aegis-tauri --all-targets --all-features -- -D warnings` is clean
 - [ ] `cargo test --workspace --exclude aegis-tauri` passes
-- [ ] Tests added/updated for the change
-- [ ] Docs updated (`ARCHITECTURE.md` / `CHANGELOG.md` / relevant `*.md`)
+- [ ] `npm run build` (tsc + vite) succeeds *(if the UI changed)*
+- [ ] `npm test` (vitest) passes *(if the UI/IPC changed)*
+- [ ] **Tests added/updated** for the change
+- [ ] **Docs updated** (`ARCHITECTURE.md` / `CHANGELOG.md` / relevant `*.md`)
 - [ ] No secrets, vault keys, databases, or real malware committed
-- [ ] New detections carry explainable evidence (if applicable)
+
+**If applicable**
+
+- [ ] New detections carry explainable evidence (typed `ThreatEvidence` + `reason()`)
+- [ ] Engine crates not modified (or change justified in the summary)
+- [ ] New dependencies pass `cargo deny check` / `cargo audit`

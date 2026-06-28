@@ -26,7 +26,8 @@ pub fn scan_chromium_extensions(extensions_dir: &Path, browser: &str) -> Vec<Per
                 continue;
             }
             let text = std::fs::read_to_string(&manifest).unwrap_or_default();
-            let json: serde_json::Value = serde_json::from_str(&text).unwrap_or(serde_json::Value::Null);
+            let json: serde_json::Value =
+                serde_json::from_str(&text).unwrap_or(serde_json::Value::Null);
             let name = json
                 .get("name")
                 .and_then(|v| v.as_str())
@@ -60,10 +61,19 @@ pub fn scan_firefox_extensions(extensions_dir: &Path) -> Vec<PersistenceEntry> {
     };
     for item in items.flatten() {
         let path = item.path();
-        if path.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("xpi")) != Some(true) {
+        if path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("xpi"))
+            != Some(true)
+        {
             continue;
         }
-        let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("addon").to_string();
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("addon")
+            .to_string();
         out.push(
             PersistenceEntry::new(
                 PersistenceKind::BrowserExtension,
@@ -83,8 +93,14 @@ pub fn collect() -> Vec<PersistenceEntry> {
     let mut out = Vec::new();
     if let Ok(local) = std::env::var("LOCALAPPDATA") {
         let chromium = [
-            ("Chrome", format!("{local}\\Google\\Chrome\\User Data\\Default\\Extensions")),
-            ("Edge", format!("{local}\\Microsoft\\Edge\\User Data\\Default\\Extensions")),
+            (
+                "Chrome",
+                format!("{local}\\Google\\Chrome\\User Data\\Default\\Extensions"),
+            ),
+            (
+                "Edge",
+                format!("{local}\\Microsoft\\Edge\\User Data\\Default\\Extensions"),
+            ),
         ];
         for (browser, dir) in chromium {
             out.extend(scan_chromium_extensions(Path::new(&dir), browser));
@@ -127,7 +143,11 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let ext = dir.path().join("store-id").join("2.0");
         std::fs::create_dir_all(&ext).unwrap();
-        std::fs::write(ext.join("manifest.json"), r#"{"name":"Good","update_url":"https://clients2.google.com/service/update2/crx"}"#).unwrap();
+        std::fs::write(
+            ext.join("manifest.json"),
+            r#"{"name":"Good","update_url":"https://clients2.google.com/service/update2/crx"}"#,
+        )
+        .unwrap();
         let e = scan_chromium_extensions(dir.path(), "Chrome");
         assert!(e[0].detail.contains("store"));
     }

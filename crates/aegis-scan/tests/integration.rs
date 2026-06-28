@@ -32,7 +32,10 @@ fn nested_directories_are_scanned() {
     let report = scan(&opts, no_cancel(), |_p| {}).unwrap();
 
     assert_eq!(report.files_scanned, 3);
-    assert!(report.files.iter().any(|f| f.metadata.path.ends_with("buried.txt")));
+    assert!(report
+        .files
+        .iter()
+        .any(|f| f.metadata.path.ends_with("buried.txt")));
 }
 
 #[cfg(windows)]
@@ -55,7 +58,11 @@ fn make_hidden(_path: &Path) {
 fn hidden_files_excluded_then_included() {
     let dir = tempfile::tempdir().unwrap();
     write(&dir.path().join("visible.txt"), b"v");
-    let hidden_name = if cfg!(windows) { "secret.txt" } else { ".secret.txt" };
+    let hidden_name = if cfg!(windows) {
+        "secret.txt"
+    } else {
+        ".secret.txt"
+    };
     let hidden = dir.path().join(hidden_name);
     write(&hidden, b"h");
     make_hidden(&hidden);
@@ -90,7 +97,10 @@ fn symlinks_are_handled() {
     let r = scan(&full, no_cancel(), |_p| {}).unwrap();
     let link_entry = r.files.iter().find(|f| f.metadata.is_symlink);
     assert!(link_entry.is_some(), "symlink entry must be present");
-    assert!(link_entry.unwrap().hashes.is_none(), "symlinks are not hashed");
+    assert!(
+        link_entry.unwrap().hashes.is_none(),
+        "symlinks are not hashed"
+    );
 }
 
 #[cfg(windows)]
@@ -117,7 +127,10 @@ fn permission_denied_is_counted_not_fatal() {
 
     // Both files traversed; the unreadable one is an error, not a panic.
     assert_eq!(report.files_scanned, 2);
-    assert!(report.errors >= 1, "locked file should be counted as an error");
+    assert!(
+        report.errors >= 1,
+        "locked file should be counted as an error"
+    );
     assert!(report.files.iter().any(|f| f.error.is_some()));
 }
 

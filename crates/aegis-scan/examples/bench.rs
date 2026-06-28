@@ -32,7 +32,10 @@ fn main() {
     println!("  errors        : {}", report.errors);
     println!("  duration      : {} ms", report.duration_ms);
     println!("  throughput    : {:.0} files/sec", report.files_per_sec);
-    println!("  throughput    : {:.1} MiB/sec", report.bytes_per_sec / (1024.0 * 1024.0));
+    println!(
+        "  throughput    : {:.1} MiB/sec",
+        report.bytes_per_sec / (1024.0 * 1024.0)
+    );
     println!("  threads       : {}", rayon_threads());
 }
 

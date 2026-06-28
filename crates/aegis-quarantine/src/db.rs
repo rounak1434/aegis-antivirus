@@ -96,7 +96,10 @@ fn row_to_record(row: &rusqlite::Row) -> rusqlite::Result<QuarantineRecord> {
 const SELECT_COLS: &str = "id, original_path, quarantine_path, sha256, threat_level, reason, \
                            size_bytes, encrypted, status, quarantined_at_utc";
 
-pub fn get_record(conn: &Connection, id: &str) -> Result<Option<QuarantineRecord>, QuarantineError> {
+pub fn get_record(
+    conn: &Connection,
+    id: &str,
+) -> Result<Option<QuarantineRecord>, QuarantineError> {
     let sql = format!("SELECT {SELECT_COLS} FROM quarantine_records WHERE id = ?1");
     let rec = conn
         .query_row(&sql, params![id], row_to_record)
@@ -105,7 +108,8 @@ pub fn get_record(conn: &Connection, id: &str) -> Result<Option<QuarantineRecord
 }
 
 pub fn list_records(conn: &Connection) -> Result<Vec<QuarantineRecord>, QuarantineError> {
-    let sql = format!("SELECT {SELECT_COLS} FROM quarantine_records ORDER BY quarantined_at_utc DESC");
+    let sql =
+        format!("SELECT {SELECT_COLS} FROM quarantine_records ORDER BY quarantined_at_utc DESC");
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map([], row_to_record)?;
     let mut out = Vec::new();

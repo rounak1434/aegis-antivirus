@@ -88,6 +88,20 @@ privileged logic in the engine crates, not the UI.
 - Never commit real malware, vault keys, databases, or runtime data — generate
   fixtures at runtime in temp dirs (see existing tests for the pattern).
 
+## Continuous Integration
+
+Every PR runs the GitHub Actions pipeline (see [`CI_CD.md`](CI_CD.md)): Rust
+(`fmt --check`, `clippy -D warnings`, `test`, `build`), Frontend (`npm run build`,
+`npm test`), and Security (`cargo-deny`, `cargo-audit`, dependency review,
+gitleaks). A PR is mergeable only when all gates pass — run them locally first:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --exclude aegis-tauri -- -D warnings
+cargo test --workspace --exclude aegis-tauri
+npm ci && npm run build && npm test
+```
+
 ## Commit & Pull Request Guidelines
 
 - Use clear, imperative commit subjects (e.g. `Add RunOnce registry collector`).

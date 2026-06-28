@@ -2,6 +2,34 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 10: CI/CD & Quality Gates — VERIFIED
+
+### Added
+- GitHub Actions pipeline (`.github/workflows/`):
+  - `ci.yml` — entry workflow (push to main + PRs) fanning out to reusable
+    workflows with a `gate` job + concurrency cancellation;
+  - `rust.yml` — `fmt --check`, `clippy -D warnings`, `test`, `build`
+    (Windows/MSVC, `aegis-tauri` excluded), with `Swatinem/rust-cache`;
+  - `frontend.yml` — `npm ci` + `npm run build` + `npm test`, npm cache;
+  - `security.yml` — `cargo-deny`, `cargo-audit`, dependency review (PRs),
+    gitleaks secret scan;
+  - `release.yml` — **draft-only** release on `v*` tags (no packaging/signing).
+- `deny.toml` (cargo-deny: advisories/licenses/bans/sources).
+- `.github/dependabot.yml` (cargo + npm + github-actions, weekly).
+- `.github/CODEOWNERS`; improved `pull_request_template.md` (required gate
+  commands + tests + docs checklist).
+- `CI_CD.md`; README CI/tests/release/license badges.
+
+### Changed
+- `cargo fmt --all` applied across the workspace so `fmt --check` passes in CI
+  (formatting only — no logic changes).
+
+### Verified
+- All 9 workflow/template YAML files validated with `npx js-yaml`.
+- Gate commands pass locally: `cargo fmt --check` clean, `clippy -D warnings`
+  clean, `cargo test --workspace --exclude aegis-tauri` 118 pass, `npm run build`
+  + `npm test` (10) green.
+
 ## Unreleased - Phase 9: UI ↔ Service Integration — VERIFIED
 
 ### Added

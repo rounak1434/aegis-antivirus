@@ -11,9 +11,7 @@ mod model;
 mod vault;
 
 pub use crypto::{CryptoError, VaultKey};
-pub use model::{
-    AuditAction, QuarantineError, QuarantineRecord, QuarantineStatus, ThreatLevel,
-};
+pub use model::{AuditAction, QuarantineError, QuarantineRecord, QuarantineStatus, ThreatLevel};
 pub use vault::Vault;
 
 // Low-level persistence is exposed for reporting/service integration.

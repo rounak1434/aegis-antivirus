@@ -35,7 +35,14 @@ impl ServiceHealth {
             .into_iter()
             .max_by_key(severity)
             .unwrap_or(ComponentStatus::Ok);
-        Self { scanner, database, rules, quarantine, active_jobs, overall }
+        Self {
+            scanner,
+            database,
+            rules,
+            quarantine,
+            active_jobs,
+            overall,
+        }
     }
 }
 

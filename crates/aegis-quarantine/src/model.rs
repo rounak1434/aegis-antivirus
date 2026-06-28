@@ -67,7 +67,11 @@ pub enum QuarantineError {
     #[error("record {id} is not in the vault (status: {status})")]
     NotInVault { id: String, status: &'static str },
     #[error("integrity check failed for {id}: expected sha256 {expected}, got {actual}")]
-    IntegrityMismatch { id: String, expected: String, actual: String },
+    IntegrityMismatch {
+        id: String,
+        expected: String,
+        actual: String,
+    },
     #[error("unsafe restore path: {0}")]
     UnsafePath(String),
     #[error("restore target already exists: {0}")]

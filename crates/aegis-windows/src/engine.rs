@@ -6,7 +6,9 @@ use chrono::Utc;
 
 use crate::heuristics::analyze_entry;
 use crate::model::{PersistenceEntry, PersistenceKind};
-use crate::{browser_extensions, drivers, hosts_file, registry, scheduled_tasks, services, startup};
+use crate::{
+    browser_extensions, drivers, hosts_file, registry, scheduled_tasks, services, startup,
+};
 
 /// The Windows security scanner.
 #[derive(Debug, Default)]
@@ -74,7 +76,10 @@ mod tests {
         );
         let det = scanner.analyze(&entry).expect("detection");
         assert!(det.score >= 30);
-        assert!(det.evidence.iter().any(|e| matches!(e, ThreatEvidence::PersistenceMechanism { .. })));
+        assert!(det
+            .evidence
+            .iter()
+            .any(|e| matches!(e, ThreatEvidence::PersistenceMechanism { .. })));
     }
 
     #[test]
@@ -100,6 +105,9 @@ mod tests {
         );
         let det = scanner.analyze(&entry).unwrap();
         // persistence(15) + powershell(25) + temp-exe(20) ⇒ High+
-        assert!(matches!(det.threat_level, ThreatLevel::High | ThreatLevel::Critical));
+        assert!(matches!(
+            det.threat_level,
+            ThreatLevel::High | ThreatLevel::Critical
+        ));
     }
 }

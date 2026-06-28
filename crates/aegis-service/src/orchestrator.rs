@@ -28,7 +28,9 @@ pub struct ServiceConfig {
 
 impl ServiceConfig {
     pub fn new(data_dir: impl Into<PathBuf>) -> Self {
-        Self { data_dir: data_dir.into() }
+        Self {
+            data_dir: data_dir.into(),
+        }
     }
 }
 
@@ -86,7 +88,10 @@ impl AegisOrchestrator {
     // ---- signature / rule management ------------------------------------
 
     pub fn add_signature_sha256(&self, hex: &str) {
-        self.signatures.lock().unwrap().insert(HashAlgo::Sha256, hex);
+        self.signatures
+            .lock()
+            .unwrap()
+            .insert(HashAlgo::Sha256, hex);
     }
 
     pub fn load_signature_file(&self, path: impl AsRef<Path>) -> Result<usize> {
@@ -137,7 +142,11 @@ impl AegisOrchestrator {
                     let detections = {
                         let sig = signatures.lock().unwrap();
                         let yara = yara.lock().unwrap();
-                        let yara_ref = if yara.is_compiled() { Some(&*yara) } else { None };
+                        let yara_ref = if yara.is_compiled() {
+                            Some(&*yara)
+                        } else {
+                            None
+                        };
                         DetectionService::new().analyze(&report, &sig, yara_ref)
                     };
                     if let Ok(conn) = aegis_db::open_database(&db_path) {
@@ -176,7 +185,11 @@ impl AegisOrchestrator {
         let cancelled = self.jobs.cancel(job_id);
         if cancelled {
             if let Ok(conn) = self.conn() {
-                let _ = db::record_event(&conn, "scan_cancelled", &serde_json::json!({ "job": job_id }));
+                let _ = db::record_event(
+                    &conn,
+                    "scan_cancelled",
+                    &serde_json::json!({ "job": job_id }),
+                );
             }
         }
         Ok(cancelled)
@@ -199,7 +212,11 @@ impl AegisOrchestrator {
 
     // ---- IPC contract: quarantine ---------------------------------------
 
-    pub fn quarantine_detection(&self, detection: &ThreatDetection, actor: &str) -> Result<QuarantineRecord> {
+    pub fn quarantine_detection(
+        &self,
+        detection: &ThreatDetection,
+        actor: &str,
+    ) -> Result<QuarantineRecord> {
         let vault = self.vault.lock().unwrap();
         QuarantineService::quarantine(&vault, detection, actor)
     }
@@ -230,12 +247,19 @@ impl AegisOrchestrator {
         DetectionService::new().persist(&conn, &detections)?;
         self.jobs.complete(&id, 0, detections.len() as u32);
         db::upsert_job(&conn, &self.jobs.get(&id).unwrap())?;
-        db::record_event(&conn, "windows_scan_completed", &serde_json::json!({ "threats": detections.len() }))?;
+        db::record_event(
+            &conn,
+            "windows_scan_completed",
+            &serde_json::json!({ "threats": detections.len() }),
+        )?;
         Ok(detections)
     }
 
     /// Analyze caller-supplied persistence entries (test seam / future RTP feed).
-    pub fn analyze_windows_entries(&self, entries: &[aegis_windows::PersistenceEntry]) -> Result<Vec<ThreatDetection>> {
+    pub fn analyze_windows_entries(
+        &self,
+        entries: &[aegis_windows::PersistenceEntry],
+    ) -> Result<Vec<ThreatDetection>> {
         let detections = WindowsSecurityService::new().analyze(entries);
         let conn = self.conn()?;
         DetectionService::new().persist(&conn, &detections)?;
@@ -250,9 +274,17 @@ impl AegisOrchestrator {
     }
 
     /// Start RTP watching an explicit set of folders (test seam / custom config).
-    pub fn start_realtime_with_paths(&self, mode: ProtectionMode, paths: Vec<String>) -> Result<()> {
+    pub fn start_realtime_with_paths(
+        &self,
+        mode: ProtectionMode,
+        paths: Vec<String>,
+    ) -> Result<()> {
         let mut guard = self.realtime.lock().unwrap();
-        if guard.as_ref().map(|r| r.monitor.is_running()).unwrap_or(false) {
+        if guard
+            .as_ref()
+            .map(|r| r.monitor.is_running())
+            .unwrap_or(false)
+        {
             return Ok(()); // already running
         }
         let engine = aegis_realtime::RealtimeEngine::new(
@@ -266,7 +298,11 @@ impl AegisOrchestrator {
         monitor.start();
         *guard = Some(RealtimeState { engine, monitor });
         if let Ok(conn) = self.conn() {
-            let _ = db::record_event(&conn, "realtime_started", &serde_json::json!({ "mode": mode }));
+            let _ = db::record_event(
+                &conn,
+                "realtime_started",
+                &serde_json::json!({ "mode": mode }),
+            );
         }
         Ok(())
     }
@@ -313,13 +349,26 @@ impl AegisOrchestrator {
     ) -> Result<()> {
         let verifier = aegis_update::UpdateVerifier::from_hex(pubkey_hex)
             .map_err(aegis_update::UpdateError::from)?;
-        let root = self.db_path.parent().unwrap_or(Path::new(".")).join("update");
-        let engine = aegis_update::UpdateEngine::new(root, verifier, fetcher, self.db_path.clone(), app_version)?;
+        let root = self
+            .db_path
+            .parent()
+            .unwrap_or(Path::new("."))
+            .join("update");
+        let engine = aegis_update::UpdateEngine::new(
+            root,
+            verifier,
+            fetcher,
+            self.db_path.clone(),
+            app_version,
+        )?;
         *self.update.lock().unwrap() = Some(engine);
         Ok(())
     }
 
-    pub fn check_updates(&self, available: &[aegis_update::UpdateManifest]) -> Result<Vec<aegis_update::UpdateManifest>> {
+    pub fn check_updates(
+        &self,
+        available: &[aegis_update::UpdateManifest],
+    ) -> Result<Vec<aegis_update::UpdateManifest>> {
         let guard = self.update.lock().unwrap();
         let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
         Ok(engine.check(available)?)
@@ -333,7 +382,10 @@ impl AegisOrchestrator {
     }
 
     /// Install a downloaded update and hot-reload the affected engine.
-    pub fn install_updates(&self, manifest: &aegis_update::UpdateManifest) -> Result<aegis_update::InstallOutcome> {
+    pub fn install_updates(
+        &self,
+        manifest: &aegis_update::UpdateManifest,
+    ) -> Result<aegis_update::InstallOutcome> {
         let outcome = {
             let guard = self.update.lock().unwrap();
             let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
@@ -342,7 +394,11 @@ impl AegisOrchestrator {
         // Reload the running engine from the freshly installed file.
         match manifest.component {
             aegis_update::UpdateComponent::SignatureDatabase => {
-                let _ = self.signatures.lock().unwrap().load_file(&outcome.installed_path);
+                let _ = self
+                    .signatures
+                    .lock()
+                    .unwrap()
+                    .load_file(&outcome.installed_path);
             }
             aegis_update::UpdateComponent::YaraRules => {
                 if let Ok(src) = std::fs::read_to_string(&outcome.installed_path) {
@@ -356,7 +412,10 @@ impl AegisOrchestrator {
         Ok(outcome)
     }
 
-    pub fn rollback_updates(&self, component: aegis_update::UpdateComponent) -> Result<aegis_update::InstallOutcome> {
+    pub fn rollback_updates(
+        &self,
+        component: aegis_update::UpdateComponent,
+    ) -> Result<aegis_update::InstallOutcome> {
         let guard = self.update.lock().unwrap();
         let engine = guard.as_ref().ok_or(ServiceError::UpdatesNotConfigured)?;
         Ok(engine.rollback(component)?)
@@ -366,7 +425,8 @@ impl AegisOrchestrator {
     /// the UI's update page works even before the verifier key is configured.
     pub fn get_update_status(&self) -> Result<Vec<(String, String)>> {
         let conn = self.conn()?;
-        let mut stmt = conn.prepare("SELECT component, version FROM installed_components ORDER BY component")?;
+        let mut stmt =
+            conn.prepare("SELECT component, version FROM installed_components ORDER BY component")?;
         let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
         Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
     }
@@ -424,6 +484,12 @@ impl AegisOrchestrator {
             .iter()
             .filter(|j| !j.status.is_terminal())
             .count();
-        ServiceHealth::compute(ComponentStatus::Ok, database, rules, quarantine, active_jobs)
+        ServiceHealth::compute(
+            ComponentStatus::Ok,
+            database,
+            rules,
+            quarantine,
+            active_jobs,
+        )
     }
 }

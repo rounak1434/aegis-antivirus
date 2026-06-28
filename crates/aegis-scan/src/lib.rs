@@ -56,13 +56,37 @@ impl ScanOptions {
     pub fn for_mode(mode: ScanMode, roots: Vec<PathBuf>) -> Self {
         match mode {
             // Quick: shallow, skip hidden/system, follow nothing — hot paths only.
-            ScanMode::Quick => Self { roots, follow_symlinks: false, include_hidden: false, max_depth: Some(6), hash_files: true },
+            ScanMode::Quick => Self {
+                roots,
+                follow_symlinks: false,
+                include_hidden: false,
+                max_depth: Some(6),
+                hash_files: true,
+            },
             // Full: everything reachable, hidden included, no symlink loops.
-            ScanMode::Full => Self { roots, follow_symlinks: false, include_hidden: true, max_depth: None, hash_files: true },
+            ScanMode::Full => Self {
+                roots,
+                follow_symlinks: false,
+                include_hidden: true,
+                max_depth: None,
+                hash_files: true,
+            },
             // Deep: as Full but also follows symlinks/reparse points.
-            ScanMode::Deep => Self { roots, follow_symlinks: true, include_hidden: true, max_depth: None, hash_files: true },
+            ScanMode::Deep => Self {
+                roots,
+                follow_symlinks: true,
+                include_hidden: true,
+                max_depth: None,
+                hash_files: true,
+            },
             // Custom: sensible defaults the caller can override field-by-field.
-            ScanMode::Custom => Self { roots, follow_symlinks: false, include_hidden: true, max_depth: None, hash_files: true },
+            ScanMode::Custom => Self {
+                roots,
+                follow_symlinks: false,
+                include_hidden: true,
+                max_depth: None,
+                hash_files: true,
+            },
         }
     }
 }
@@ -177,7 +201,11 @@ fn system_time_to_utc(t: SystemTime) -> DateTime<Utc> {
 
 /// Run a scan. `cancel` is polled cooperatively; `on_progress` is invoked as
 /// files are hashed (it must be `Sync` — it is called from worker threads).
-pub fn scan<F>(opts: &ScanOptions, cancel: Arc<AtomicBool>, on_progress: F) -> Result<ScanReport, ScanError>
+pub fn scan<F>(
+    opts: &ScanOptions,
+    cancel: Arc<AtomicBool>,
+    on_progress: F,
+) -> Result<ScanReport, ScanError>
 where
     F: Fn(ScanProgress) + Sync + Send,
 {
@@ -244,7 +272,11 @@ where
                 cancelled.store(true, Ordering::Relaxed);
             }
             if cancelled.load(Ordering::Relaxed) {
-                return ScannedFile { metadata: meta.clone(), hashes: None, error: Some("cancelled".into()) };
+                return ScannedFile {
+                    metadata: meta.clone(),
+                    hashes: None,
+                    error: Some("cancelled".into()),
+                };
             }
 
             let (hashes, error) = if opts.hash_files && !meta.is_symlink {
@@ -260,12 +292,21 @@ where
             };
 
             let files = files_counter.fetch_add(1, Ordering::Relaxed) + 1;
-            let bytes = bytes_counter.fetch_add(meta.size_bytes, Ordering::Relaxed) + meta.size_bytes;
+            let bytes =
+                bytes_counter.fetch_add(meta.size_bytes, Ordering::Relaxed) + meta.size_bytes;
             let elapsed = started_instant.elapsed().as_secs_f64().max(1e-6);
             let fps = files as f64 / elapsed;
-            let percent = if total_files > 0 { files as f64 / total_files as f64 * 100.0 } else { 100.0 };
+            let percent = if total_files > 0 {
+                files as f64 / total_files as f64 * 100.0
+            } else {
+                100.0
+            };
             let remaining = total_files.saturating_sub(files) as f64;
-            let eta_ms = if fps > 0.0 { (remaining / fps * 1000.0) as u64 } else { 0 };
+            let eta_ms = if fps > 0.0 {
+                (remaining / fps * 1000.0) as u64
+            } else {
+                0
+            };
             on_progress(ScanProgress {
                 files_scanned: files,
                 total_files,
@@ -279,7 +320,11 @@ where
                 current_path: meta.path.clone(),
             });
 
-            ScannedFile { metadata: meta.clone(), hashes, error }
+            ScannedFile {
+                metadata: meta.clone(),
+                hashes,
+                error,
+            }
         })
         .collect();
 
@@ -336,7 +381,10 @@ mod tests {
         write(&p, b"abc");
         let h = compute_hashes(&p).unwrap();
         // Well-known digests of "abc".
-        assert_eq!(h.sha256, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        assert_eq!(
+            h.sha256,
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
         assert_eq!(h.md5, "900150983cd24fb0d6963f7d28e17f72");
     }
 
@@ -383,7 +431,10 @@ mod tests {
 
     #[test]
     fn missing_root_errors() {
-        let opts = ScanOptions::for_mode(ScanMode::Full, vec![PathBuf::from("Z:/definitely/not/here/aegis")]);
+        let opts = ScanOptions::for_mode(
+            ScanMode::Full,
+            vec![PathBuf::from("Z:/definitely/not/here/aegis")],
+        );
         let err = scan(&opts, Arc::new(AtomicBool::new(false)), |_p| {}).unwrap_err();
         assert!(matches!(err, ScanError::MissingRoot(_)));
     }

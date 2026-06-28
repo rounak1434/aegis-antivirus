@@ -34,7 +34,9 @@ fn main() {
     let t = Instant::now();
     let mut ids = Vec::with_capacity(n);
     for p in &paths {
-        let rec = vault.quarantine_file(p, ThreatLevel::High, "bench", "bench").unwrap();
+        let rec = vault
+            .quarantine_file(p, ThreatLevel::High, "bench", "bench")
+            .unwrap();
         ids.push(rec.id);
     }
     let q = t.elapsed().as_secs_f64().max(1e-6);
@@ -58,9 +60,23 @@ fn main() {
 
     println!("aegis-quarantine benchmark");
     println!("  files            : {n}  ({kib} KiB each, {total_mib:.1} MiB total)");
-    println!("  quarantine       : {:.0} ms  | {:.0} files/s | {:.1} MiB/s", q * 1000.0, n as f64 / q, total_mib / q);
-    println!("  restore          : {:.0} ms  | {:.0} files/s | {:.1} MiB/s", r * 1000.0, n as f64 / r, total_mib / r);
-    println!("  aes-256-gcm only : {:.0} ms  | {:.1} MiB/s (encryption overhead)", e * 1000.0, total_mib / e);
+    println!(
+        "  quarantine       : {:.0} ms  | {:.0} files/s | {:.1} MiB/s",
+        q * 1000.0,
+        n as f64 / q,
+        total_mib / q
+    );
+    println!(
+        "  restore          : {:.0} ms  | {:.0} files/s | {:.1} MiB/s",
+        r * 1000.0,
+        n as f64 / r,
+        total_mib / r
+    );
+    println!(
+        "  aes-256-gcm only : {:.0} ms  | {:.1} MiB/s (encryption overhead)",
+        e * 1000.0,
+        total_mib / e
+    );
 
     let _ = Path::new("x");
 }

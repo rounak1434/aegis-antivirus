@@ -36,7 +36,10 @@ impl JobStatus {
         }
     }
     pub fn is_terminal(&self) -> bool {
-        matches!(self, JobStatus::Completed | JobStatus::Cancelled | JobStatus::Failed)
+        matches!(
+            self,
+            JobStatus::Completed | JobStatus::Cancelled | JobStatus::Failed
+        )
     }
 }
 
@@ -89,10 +92,13 @@ impl JobManager {
             started_at: None,
             finished_at: None,
         };
-        self.jobs
-            .lock()
-            .unwrap()
-            .insert(id.clone(), JobEntry { state, cancel: cancel.clone() });
+        self.jobs.lock().unwrap().insert(
+            id.clone(),
+            JobEntry {
+                state,
+                cancel: cancel.clone(),
+            },
+        );
         (id, cancel)
     }
 
@@ -154,7 +160,12 @@ impl JobManager {
     }
 
     pub fn list(&self) -> Vec<JobState> {
-        self.jobs.lock().unwrap().values().map(|e| e.state.clone()).collect()
+        self.jobs
+            .lock()
+            .unwrap()
+            .values()
+            .map(|e| e.state.clone())
+            .collect()
     }
 
     fn mutate(&self, id: &str, f: impl FnOnce(&mut JobState)) {

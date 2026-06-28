@@ -15,7 +15,10 @@ pub enum DetectDbError {
 }
 
 /// Insert one detection into `detection_results`. Returns the detection id.
-pub fn persist_detection(conn: &Connection, det: &ThreatDetection) -> Result<String, DetectDbError> {
+pub fn persist_detection(
+    conn: &Connection,
+    det: &ThreatDetection,
+) -> Result<String, DetectDbError> {
     let evidence_json = serde_json::to_string(&det.evidence)?;
     let level = serde_json::to_string(&det.threat_level)?;
     let level = level.trim_matches('"');
@@ -23,7 +26,14 @@ pub fn persist_detection(conn: &Connection, det: &ThreatDetection) -> Result<Str
         "INSERT INTO detection_results
             (id, path, threat_level, score, evidence_json, detected_at_utc)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![det.id, det.path, level, det.score, evidence_json, det.timestamp.to_rfc3339()],
+        params![
+            det.id,
+            det.path,
+            level,
+            det.score,
+            evidence_json,
+            det.timestamp.to_rfc3339()
+        ],
     )?;
     Ok(det.id.clone())
 }
@@ -41,7 +51,14 @@ pub fn record_scan_event(
         "INSERT INTO scan_events
             (id, scan_id, event_type, path, detail_json, created_at_utc)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![id, scan_id, event_type, path, detail.to_string(), Utc::now().to_rfc3339()],
+        params![
+            id,
+            scan_id,
+            event_type,
+            path,
+            detail.to_string(),
+            Utc::now().to_rfc3339()
+        ],
     )?;
     Ok(id)
 }

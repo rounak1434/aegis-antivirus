@@ -13,7 +13,10 @@ use aegis_signatures::SignatureDatabase;
 use aegis_yara::RuleManager;
 
 fn main() {
-    let n: usize = std::env::args().nth(1).and_then(|a| a.parse().ok()).unwrap_or(2000);
+    let n: usize = std::env::args()
+        .nth(1)
+        .and_then(|a| a.parse().ok())
+        .unwrap_or(2000);
 
     let data = tempfile::tempdir().unwrap();
     let work = tempfile::tempdir().unwrap();
@@ -35,13 +38,19 @@ fn main() {
     let mut events = Vec::with_capacity(n);
     for i in 0..n {
         let (name, content): (String, &[u8]) = if i % 10 == 0 {
-            (format!("drop{i}.ps1"), b"powershell -enc AAAA; IEX (DownloadString)")
+            (
+                format!("drop{i}.ps1"),
+                b"powershell -enc AAAA; IEX (DownloadString)",
+            )
         } else {
             (format!("file{i}.txt"), b"benign content")
         };
         let p = work.path().join(name);
         fs::write(&p, content).unwrap();
-        events.push(FileEvent { kind: FileEventKind::Create, path: p.display().to_string() });
+        events.push(FileEvent {
+            kind: FileEventKind::Create,
+            path: p.display().to_string(),
+        });
     }
 
     // Single-file scan latency (warm).
@@ -61,7 +70,13 @@ fn main() {
     println!("  alerts raised     : {}", engine.alerts_raised());
     println!("  total time        : {:.0} ms", elapsed * 1000.0);
     println!("  events/sec        : {:.0}", n as f64 / elapsed);
-    println!("  event latency avg : {:.1} us", elapsed * 1_000_000.0 / n as f64);
-    println!("  single-file scan  : {:.1} us", scan_latency.as_micros() as f64);
+    println!(
+        "  event latency avg : {:.1} us",
+        elapsed * 1_000_000.0 / n as f64
+    );
+    println!(
+        "  single-file scan  : {:.1} us",
+        scan_latency.as_micros() as f64
+    );
     let _ = PathBuf::from("x");
 }

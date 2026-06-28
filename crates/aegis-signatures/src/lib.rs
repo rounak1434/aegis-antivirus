@@ -224,7 +224,11 @@ mod tests {
         let mut db = SignatureDatabase::new();
         db.load_file(&p).unwrap();
         assert_eq!(db.len(), 1);
-        std::fs::write(&p, format!("sha256:{}\nmd5:{}\n", "d".repeat(64), "e".repeat(32))).unwrap();
+        std::fs::write(
+            &p,
+            format!("sha256:{}\nmd5:{}\n", "d".repeat(64), "e".repeat(32)),
+        )
+        .unwrap();
         let n = db.reload().unwrap();
         assert_eq!(n, 2);
         assert!(db.contains_md5(&"e".repeat(32)));

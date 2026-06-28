@@ -24,7 +24,10 @@ pub struct Debouncer {
 
 impl Debouncer {
     pub fn new(window: Duration) -> Self {
-        Self { last: Mutex::new(HashMap::new()), window }
+        Self {
+            last: Mutex::new(HashMap::new()),
+            window,
+        }
     }
 
     /// True if this path should be processed now (not a recent duplicate).
@@ -63,7 +66,9 @@ pub fn default_watched_paths() -> Vec<String> {
     if let Ok(temp) = std::env::var("TEMP").or_else(|_| std::env::var("TMP")) {
         out.push(temp);
     }
-    out.into_iter().filter(|p| std::path::Path::new(p).is_dir()).collect()
+    out.into_iter()
+        .filter(|p| std::path::Path::new(p).is_dir())
+        .collect()
 }
 
 /// Owns the background watcher + poller threads.
@@ -76,7 +81,12 @@ pub struct RealtimeMonitor {
 
 impl RealtimeMonitor {
     pub fn new(engine: RealtimeEngine, watched: Vec<String>) -> Self {
-        Self { engine, watched, running: Arc::new(AtomicBool::new(false)), handle: None }
+        Self {
+            engine,
+            watched,
+            running: Arc::new(AtomicBool::new(false)),
+            handle: None,
+        }
     }
 
     pub fn is_running(&self) -> bool {
@@ -112,8 +122,7 @@ impl RealtimeMonitor {
 
             let mut sys = sysinfo::System::new();
             sys.refresh_processes(sysinfo::ProcessesToUpdate::All);
-            let mut seen_pids: HashSet<u32> =
-                sys.processes().keys().map(|p| p.as_u32()).collect();
+            let mut seen_pids: HashSet<u32> = sys.processes().keys().map(|p| p.as_u32()).collect();
             let mut last_poll = Instant::now();
 
             while running.load(Ordering::Relaxed) {
@@ -142,7 +151,10 @@ impl RealtimeMonitor {
                             engine.handle_process_event(&ProcessEvent {
                                 pid: id,
                                 name: proc_.name().to_string_lossy().to_string(),
-                                exe_path: proc_.exe().map(|e| e.display().to_string()).unwrap_or_default(),
+                                exe_path: proc_
+                                    .exe()
+                                    .map(|e| e.display().to_string())
+                                    .unwrap_or_default(),
                                 command_line: cmd,
                             });
                         }
@@ -191,13 +203,18 @@ mod tests {
     #[test]
     fn event_kind_mapping() {
         use notify::event::{CreateKind, ModifyKind, RemoveKind, RenameMode};
-        assert_eq!(map_event_kind(&EventKind::Create(CreateKind::File)), Some(FileEventKind::Create));
+        assert_eq!(
+            map_event_kind(&EventKind::Create(CreateKind::File)),
+            Some(FileEventKind::Create)
+        );
         assert_eq!(
             map_event_kind(&EventKind::Modify(ModifyKind::Name(RenameMode::Both))),
             Some(FileEventKind::Rename)
         );
         assert_eq!(
-            map_event_kind(&EventKind::Modify(ModifyKind::Data(notify::event::DataChange::Any))),
+            map_event_kind(&EventKind::Modify(ModifyKind::Data(
+                notify::event::DataChange::Any
+            ))),
             Some(FileEventKind::Modify)
         );
         assert_eq!(map_event_kind(&EventKind::Remove(RemoveKind::File)), None);

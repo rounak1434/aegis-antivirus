@@ -43,7 +43,9 @@ pub fn parse_csv(text: &str) -> Vec<Vec<String>> {
 
 /// Map header name → column index (case-insensitive).
 pub fn header_index(header: &[String], name: &str) -> Option<usize> {
-    header.iter().position(|h| h.trim().eq_ignore_ascii_case(name))
+    header
+        .iter()
+        .position(|h| h.trim().eq_ignore_ascii_case(name))
 }
 
 #[cfg(test)]

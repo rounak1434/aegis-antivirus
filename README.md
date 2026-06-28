@@ -5,11 +5,17 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/rounak1434/aegis-antivirus/actions/workflows/ci.yml"><img alt="Build" src="https://github.com/rounak1434/aegis-antivirus/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-118%20rust%20%2B%2010%20web-brightgreen">
+  <a href="https://github.com/rounak1434/aegis-antivirus/releases"><img alt="Release" src="https://img.shields.io/github/v/release/rounak1434/aegis-antivirus?include_prereleases&sort=semver"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-blue"></a>
+</p>
+
+<p align="center">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-1.96-000000?logo=rust&logoColor=white">
   <img alt="Tauri" src="https://img.shields.io/badge/Tauri-v2-24C8DB?logo=tauri&logoColor=white">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white">
   <img alt="YARA-X" src="https://img.shields.io/badge/YARA--X-1.19-6E40C9">
-  <img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-blue">
 </p>
 
 ---

@@ -1,0 +1,44 @@
+name: Rust
+
+# Reusable workflow: fmt + clippy + test + build for the Rust workspace.
+# Runs on Windows because Aegis targets the MSVC toolchain. The `aegis-tauri`
+# crate is excluded from the gate (it needs the full Tauri/WebView2 + icon
+# bundle build, which is exercised in the release workflow, not on every PR).
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: fmt · clippy · test · build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable, MSVC)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+
+      - name: Cache cargo + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          # caches ~/.cargo/registry, ~/.cargo/git, and ./target
+          shared-key: aegis-rust
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets --all-features --exclude aegis-tauri -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --exclude aegis-tauri
+
+      - name: Build
+        run: cargo build --workspace --exclude aegis-tauri

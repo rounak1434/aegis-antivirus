@@ -55,7 +55,11 @@ impl Fetcher for ReqwestFetcher {
     }
 }
 
-fn try_fetch(client: &reqwest::blocking::Client, url: &str, dest: &Path) -> Result<u64, DownloadError> {
+fn try_fetch(
+    client: &reqwest::blocking::Client,
+    url: &str,
+    dest: &Path,
+) -> Result<u64, DownloadError> {
     let resume_from = std::fs::metadata(dest).map(|m| m.len()).unwrap_or(0);
     let mut req = client.get(url);
     if resume_from > 0 {
@@ -65,13 +69,19 @@ fn try_fetch(client: &reqwest::blocking::Client, url: &str, dest: &Path) -> Resu
     if !resp.status().is_success() && resp.status() != reqwest::StatusCode::PARTIAL_CONTENT {
         return Err(DownloadError::Http(format!("status {}", resp.status())));
     }
-    let mut file = OpenOptions::new().create(true).append(resume_from > 0).write(true).open(dest)?;
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(resume_from > 0)
+        .write(true)
+        .open(dest)?;
     if resume_from > 0 {
         file.seek(SeekFrom::End(0))?;
     }
     let mut buf = [0u8; 64 * 1024];
     loop {
-        let read = resp.read(&mut buf).map_err(|e| DownloadError::Http(e.to_string()))?;
+        let read = resp
+            .read(&mut buf)
+            .map_err(|e| DownloadError::Http(e.to_string()))?;
         if read == 0 {
             break;
         }

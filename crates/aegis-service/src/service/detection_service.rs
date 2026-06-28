@@ -15,7 +15,9 @@ pub struct DetectionService {
 
 impl DetectionService {
     pub fn new() -> Self {
-        Self { engine: DetectionEngine::new() }
+        Self {
+            engine: DetectionEngine::new(),
+        }
     }
 
     /// Analyze every file in a scan report into explainable detections.
@@ -29,7 +31,11 @@ impl DetectionService {
     }
 
     /// Persist detections to `detection_results`.
-    pub fn persist(&self, conn: &Connection, detections: &[ThreatDetection]) -> Result<(), ServiceError> {
+    pub fn persist(
+        &self,
+        conn: &Connection,
+        detections: &[ThreatDetection],
+    ) -> Result<(), ServiceError> {
         for det in detections {
             persist_detection(conn, det).map_err(|e| ServiceError::Other(e.to_string()))?;
         }

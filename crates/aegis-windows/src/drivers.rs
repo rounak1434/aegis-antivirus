@@ -23,7 +23,10 @@ pub fn parse_driverquery_csv(text: &str) -> Vec<PersistenceEntry> {
             continue;
         }
         let path = row.get(path_col).map(String::as_str).unwrap_or("");
-        let start = start_col.and_then(|i| row.get(i)).map(String::as_str).unwrap_or("");
+        let start = start_col
+            .and_then(|i| row.get(i))
+            .map(String::as_str)
+            .unwrap_or("");
         entries.push(
             PersistenceEntry::new(PersistenceKind::DriverPersistence, name, path, "drivers")
                 .with_detail(format!("start: {start}")),
@@ -35,7 +38,9 @@ pub fn parse_driverquery_csv(text: &str) -> Vec<PersistenceEntry> {
 #[cfg(windows)]
 pub fn collect() -> Vec<PersistenceEntry> {
     use std::process::Command;
-    let out = Command::new("driverquery").args(["/v", "/fo", "csv"]).output();
+    let out = Command::new("driverquery")
+        .args(["/v", "/fo", "csv"])
+        .output();
     match out {
         Ok(o) if o.status.success() => parse_driverquery_csv(&String::from_utf8_lossy(&o.stdout)),
         _ => Vec::new(),

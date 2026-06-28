@@ -153,6 +153,23 @@
 - [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
+## CI/CD & Quality Gates (Phase 10) — VERIFIED ✓
+
+> Validated 2026-06-24: all 9 workflow/template YAML files parse (`npx js-yaml`);
+> gate commands verified locally (`cargo fmt --check` clean after `cargo fmt`,
+> clippy clean, 118 tests, npm build + 10 vitest). See `CI_CD.md`.
+
+- [x] Workflows: `ci.yml` (orchestrator), `rust.yml`, `frontend.yml`,
+      `security.yml`, `release.yml` (draft).
+- [x] Rust gate: fmt-check, clippy `-D warnings`, test, build; cargo cache.
+- [x] Frontend gate: `npm ci` + build + test; npm cache.
+- [x] Security: cargo-deny (`deny.toml`), cargo-audit, dependency review, gitleaks.
+- [x] Quality `gate` job requires rust+frontend+security to pass.
+- [x] `.github/dependabot.yml` (cargo, npm, github-actions, weekly).
+- [x] `.github/CODEOWNERS`; improved PR template (required gate + tests + docs).
+- [x] README badges (build/tests/release/license); `cargo fmt` applied workspace-wide.
+- [x] `CI_CD.md`; README/CONTRIBUTING/TASKS/CHANGELOG updated.
+
 ## UI ↔ Service Integration (Phase 9) — VERIFIED ✓
 
 > Validated 2026-06-24: `npm run build` clean, `npm test` 10/10 (vitest),

@@ -17,9 +17,7 @@ mod model;
 
 pub use db::{detection_count, persist_detection, record_scan_event, DetectDbError};
 pub use engine::{DetectionEngine, EngineConfig};
-pub use model::{
-    clamp_score, level_for_score, ThreatDetection, ThreatEvidence, ThreatLevel,
-};
+pub use model::{clamp_score, level_for_score, ThreatDetection, ThreatEvidence, ThreatLevel};
 
 // Re-export the layer types callers commonly need.
 pub use aegis_signatures::{HashAlgo, SignatureDatabase};

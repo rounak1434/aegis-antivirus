@@ -14,9 +14,18 @@ pub fn classify(service_type: u32) -> Option<PersistenceKind> {
 }
 
 /// Build a service/driver entry from its registry fields.
-pub fn entry_from_service(name: &str, image_path: &str, service_type: u32) -> Option<PersistenceEntry> {
+pub fn entry_from_service(
+    name: &str,
+    image_path: &str,
+    service_type: u32,
+) -> Option<PersistenceEntry> {
     let kind = classify(service_type)?;
-    Some(PersistenceEntry::new(kind, name, image_path, "HKLM\\SYSTEM\\CurrentControlSet\\Services"))
+    Some(PersistenceEntry::new(
+        kind,
+        name,
+        image_path,
+        "HKLM\\SYSTEM\\CurrentControlSet\\Services",
+    ))
 }
 
 /// Enumerate `HKLM\SYSTEM\CurrentControlSet\Services` (best-effort).

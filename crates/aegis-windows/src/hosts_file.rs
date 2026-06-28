@@ -46,7 +46,8 @@ mod tests {
 
     #[test]
     fn parses_mappings_and_skips_comments() {
-        let text = "# comment\n127.0.0.1 localhost\n10.0.0.5 www.microsoft.com evil.test # inline\n\n";
+        let text =
+            "# comment\n127.0.0.1 localhost\n10.0.0.5 www.microsoft.com evil.test # inline\n\n";
         let e = parse_hosts(text);
         assert_eq!(e.len(), 3);
         assert_eq!(e[0].name, "localhost");
