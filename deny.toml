@@ -6,8 +6,21 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-# Add advisory IDs here only with a justification if a transitive fix is pending.
-ignore = []
+# Each ignore is justified in SECURITY_REVIEW.md. All are transitive, with no
+# upstream fix, and unreachable or not-built in the Aegis Windows target.
+ignore = [
+  # rsa Marvin timing sidechannel — via yara-x; Aegis performs NO RSA ops
+  # (signing is Ed25519, vault is AES-256-GCM). Unreachable in our code paths.
+  "RUSTSEC-2023-0071",
+  # gtk-rs / atk / gdk / glib (GTK3) — Tauri's LINUX GUI bindings; not compiled
+  # or shipped in the Windows (MSVC) build that Aegis targets.
+  "RUSTSEC-2024-0411", "RUSTSEC-2024-0412", "RUSTSEC-2024-0413", "RUSTSEC-2024-0414",
+  "RUSTSEC-2024-0415", "RUSTSEC-2024-0416", "RUSTSEC-2024-0417", "RUSTSEC-2024-0418",
+  "RUSTSEC-2024-0419", "RUSTSEC-2024-0420", "RUSTSEC-2024-0429",
+  # Unmaintained transitives via yara-x / regex / tauri (informational only).
+  "RUSTSEC-2024-0370", "RUSTSEC-2025-0075", "RUSTSEC-2025-0080", "RUSTSEC-2025-0081",
+  "RUSTSEC-2025-0098", "RUSTSEC-2025-0100", "RUSTSEC-2025-0141",
+]
 
 [licenses]
 version = 2

@@ -153,6 +153,22 @@
 - [x] Bind orchestrator to RTP (`start_realtime` / `stop_realtime` / `get_realtime_status`).
 - [ ] Bind orchestrator to the Tauri command bridge / named-pipe IPC server.
 
+## Performance & Security Hardening (Phase 13) — VERIFIED ✓
+
+> Validated 2026-06-24: benchmarks (scan 70.8k files/s @100k; detect peak
+> 27.4 MiB), `cargo audit`/clippy/fmt clean, 0 unsafe + 0 input-panics, manual
+> security review. No engine changes (no bug found). Reports: PERFORMANCE_REPORT,
+> SECURITY_REVIEW, HARDENING_REPORT, KNOWN_LIMITATIONS.
+
+- [x] Performance + load benchmarks (100 / 10k / 100k files; detect/quarantine/RTP/update).
+- [x] Static analysis: clippy, fmt, cargo-audit (+ justified ignores in deny.toml/audit.toml).
+- [x] Security review: unsafe, panic paths, path traversal, symlink, TOCTOU,
+      quarantine integrity, rollback, update verification.
+- [x] Memory/thread validation: leaks, deadlocks, background-thread shutdown.
+- [x] Fuzz-lite: malformed-input rejection via existing negative tests (cargo-fuzz = future).
+- [x] 4 reports + README/CHANGELOG/TASKS updated.
+- [ ] Compatibility matrix (Win10/Win11/VM/upgrade) + GUI/startup profiling on a target host.
+
 ## Windows Installer & Service Deployment (Phase 11) — CONFIGURED ✓
 
 > Config + scripts validated 2026-06-24 (`tauri.conf.json` JSON, `service.wxs`

@@ -2,6 +2,29 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 13: Performance & Security Hardening — VERIFIED
+
+### Validated (no engine/detection changes — none needed)
+- Performance/load benchmarks: scan 26k→47k→**70.8k files/s** at 100/10k/100k
+  files; detect 1,830 files/s @ peak **27.4 MiB**; quarantine 973/1,004 files/s
+  (AES-256-GCM 1,379 MiB/s); RTP 864 events/s; update verify ~470 MiB/s.
+- Static analysis: `cargo fmt --check` clean, `cargo clippy -D warnings` clean,
+  `cargo audit` (726 deps) assessed, **0 `unsafe` blocks in library code**, **0
+  untrusted-input panics**, crash/panic count **0**.
+- Manual hardening review: path-traversal guards (quarantine restore), SHA-256
+  integrity restore, Ed25519+hash+anti-rollback update gate, symlink handling,
+  temp-file safety, thread shutdown (RTP join on stop/Drop) — all confirmed sound.
+
+### Changed
+- `deny.toml` + new `.cargo/audit.toml`: 19 transitive advisories ignored **with
+  per-ID justification** — `rsa` Marvin (via yara-x, **unreachable**: Aegis does
+  no RSA), GTK3 bindings (Tauri, **Linux-only**, not in the Windows build), and
+  unmaintained transitives. Keeps the CI security gate green without masking risk.
+
+### Added
+- `PERFORMANCE_REPORT.md`, `SECURITY_REVIEW.md`, `HARDENING_REPORT.md`,
+  `KNOWN_LIMITATIONS.md`.
+
 ## Unreleased - Phase 12: Release Engineering & Code Signing — PREPARED
 
 ### Added

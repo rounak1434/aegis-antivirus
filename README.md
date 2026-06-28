@@ -215,6 +215,16 @@ files with AES-256-GCM; see [`QUARANTINE_SYSTEM.md`](QUARANTINE_SYSTEM.md) for
 its key-management limitations. To report a vulnerability, see
 [`SECURITY.md`](SECURITY.md).
 
+## Quality & hardening
+
+Validated in Phase 13: 0 library `unsafe`, 0 untrusted-input panics, 0 clippy
+issues, `cargo audit` green (transitive advisories assessed + justified). Scan
+peaks at **70.8k files/s** (100k files); detect peak RSS **27.4 MiB**. Reports:
+[`PERFORMANCE_REPORT.md`](PERFORMANCE_REPORT.md),
+[`SECURITY_REVIEW.md`](SECURITY_REVIEW.md),
+[`HARDENING_REPORT.md`](HARDENING_REPORT.md),
+[`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md).
+
 ## Contributing
 
 Contributions are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup,

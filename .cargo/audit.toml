@@ -1,0 +1,29 @@
+# cargo-audit configuration. Mirrors deny.toml's advisory ignores — all are
+# transitive, fix-less, and unreachable or not-built in the Windows target.
+# Rationale per ID is documented in SECURITY_REVIEW.md.
+[advisories]
+ignore = [
+  # rsa Marvin timing sidechannel (via yara-x). Aegis does no RSA — Ed25519 +
+  # AES-256-GCM only. Unreachable.
+  "RUSTSEC-2023-0071",
+  # GTK3 bindings (gtk/atk/gdk/glib) via Tauri — Linux-only, not in the Windows build.
+  "RUSTSEC-2024-0411",
+  "RUSTSEC-2024-0412",
+  "RUSTSEC-2024-0413",
+  "RUSTSEC-2024-0414",
+  "RUSTSEC-2024-0415",
+  "RUSTSEC-2024-0416",
+  "RUSTSEC-2024-0417",
+  "RUSTSEC-2024-0418",
+  "RUSTSEC-2024-0419",
+  "RUSTSEC-2024-0420",
+  "RUSTSEC-2024-0429",
+  # Unmaintained transitives (yara-x / regex / tauri) — informational only.
+  "RUSTSEC-2024-0370",
+  "RUSTSEC-2025-0075",
+  "RUSTSEC-2025-0080",
+  "RUSTSEC-2025-0081",
+  "RUSTSEC-2025-0098",
+  "RUSTSEC-2025-0100",
+  "RUSTSEC-2025-0141",
+]
