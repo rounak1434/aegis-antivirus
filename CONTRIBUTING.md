@@ -26,6 +26,25 @@ npm install
 npm run tauri dev
 ```
 
+## First-Time Contributors
+
+New here? Welcome — you don't need security expertise to help.
+
+1. **Pick a starting point.** Look for issues labelled
+   [`good first issue`](https://github.com/rounak1434/aegis-antivirus/labels/good%20first%20issue)
+   or [`help wanted`](https://github.com/rounak1434/aegis-antivirus/labels/help%20wanted).
+   Docs, tests, and UI polish are great first contributions.
+2. **Say hi on the issue** before you start, so work isn't duplicated.
+3. **Fork → branch → PR.** Create a topic branch
+   (`git checkout -b fix/typo-in-readme`), commit, push to your fork, and open a
+   pull request against `main`.
+4. **Run the gate locally** (below) before pushing — `cargo fmt`, `cargo clippy`,
+   `cargo test`. The same checks run in review.
+5. **Small is good.** A one-line docs fix is a perfectly valid first PR.
+
+Good no-Rust-needed starters: improve docs, capture UI screenshots
+(see [`SCREENSHOTS.md`](SCREENSHOTS.md)), add YARA rules, or triage issues.
+
 ## Project Layout
 
 The backend is a Cargo workspace of focused crates under `crates/` (see the

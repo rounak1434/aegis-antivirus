@@ -50,34 +50,47 @@ React UI is mid-migration from the design prototype.
 | ✅ Phase 3 — Detection Engine (`aegis-detect`, `aegis-yara`, `aegis-signatures`) | Verified |
 | ✅ Phase 4 — Quarantine System (`aegis-quarantine`) | Verified |
 | ✅ Phase 5 — Windows Security Scanner (`aegis-windows`) | Verified |
+| ✅ Phase 6 — Service Integration (`aegis-service` orchestrator) | Verified |
 | 🚧 UI migration (prototype → React) | In progress |
 | ⏳ Real-time protection, reporting, updater, packaging | Planned |
 
-See [`ROADMAP.md`](ROADMAP.md) and [`TASKS.md`](TASKS.md) for detail.
+**Verified milestones:** Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅ · Phase 4 ✅ ·
+Phase 5 ✅ · Phase 6 ✅
+
+See [`ROADMAP_PUBLIC.md`](ROADMAP_PUBLIC.md), [`ROADMAP.md`](ROADMAP.md), and
+[`TASKS.md`](TASKS.md) for detail.
 
 ## Architecture Overview
 
-```text
-┌──────────────────────────────┐
-│ Aegis Desktop UI             │  Tauri v2 + React + TypeScript + Zustand
-│ user-mode, non-privileged    │
-└──────────────┬───────────────┘
-               │ typed IPC boundary
-┌──────────────▼───────────────┐
-│ AegisService (Rust)          │  owns privileged operations
-└──────────────┬───────────────┘
-               │
-┌──────────────▼───────────────┐
-│ Engine crates                │  scan · signatures · yara · detect ·
-│                              │  quarantine · windows
-└──────────────┬───────────────┘
-               │
-┌──────────────▼───────────────┐
-│ SQLite (migrations + repos)  │
-└──────────────────────────────┘
+Privilege-separated: a non-privileged Tauri/React UI talks over a typed IPC
+boundary to the Rust `AegisService` orchestrator, which is the *only* path to the
+engine crates and the SQLite store.
+
+```mermaid
+flowchart TD
+    UI["Aegis Desktop UI<br/>Tauri v2 · React · TypeScript · Zustand<br/><i>user-mode, non-privileged</i>"]
+    SVC["AegisService — orchestrator<br/>(aegis-service)<br/><i>owns all privileged operations</i>"]
+    JOBS["JobManager<br/>queue · run · cancel · status"]
+
+    subgraph ENGINES["Engine crates (verified)"]
+        SCAN["aegis-scan<br/>multi-threaded scanner"]
+        DET["aegis-detect<br/>+ aegis-yara · aegis-signatures"]
+        QUAR["aegis-quarantine<br/>AES-256-GCM vault"]
+        WIN["aegis-windows<br/>persistence scanner"]
+    end
+
+    DB[("SQLite<br/>migrations + repos")]
+
+    UI -- "typed IPC" --> SVC
+    SVC --> JOBS
+    SVC --> SCAN --> DET --> QUAR
+    SVC --> WIN --> DET
+    SVC --> DB
+    QUAR --> DB
 ```
 
 Full design: [`ARCHITECTURE.md`](ARCHITECTURE.md),
+[`SERVICE_INTEGRATION.md`](SERVICE_INTEGRATION.md),
 [`DETECTION_ENGINE.md`](DETECTION_ENGINE.md),
 [`QUARANTINE_SYSTEM.md`](QUARANTINE_SYSTEM.md),
 [`WINDOWS_SCANNER.md`](WINDOWS_SCANNER.md).
@@ -117,8 +130,18 @@ aegis-antivirus/
 
 ## Screenshots
 
-> _Screenshots will be added as the React UI migration completes._
-> The design prototype lives under [`design-prototype/`](design-prototype/).
+The UI follows the design prototype in [`design-prototype/`](design-prototype/).
+Screenshot inventory + capture instructions: [`SCREENSHOTS.md`](SCREENSHOTS.md);
+images live under [`docs/screenshots/`](docs/screenshots/).
+
+| Dashboard | Scan Center | Threat Center |
+|-----------|-------------|---------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Scan Center](docs/screenshots/scan-center.png) | ![Threat Center](docs/screenshots/threat-center.png) |
+| **Quarantine** | **Real-Time Protection** | **Settings** |
+| ![Quarantine](docs/screenshots/quarantine.png) | ![Real-Time](docs/screenshots/realtime.png) | ![Settings](docs/screenshots/settings.png) |
+
+> _Image files are placeholders until the React UI migration completes — see
+> [`SCREENSHOTS.md`](SCREENSHOTS.md) to capture them._
 
 ## Development Setup
 
