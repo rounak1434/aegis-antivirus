@@ -80,6 +80,21 @@ sc.exe qfailure AegisService       # recovery actions
 Get-Content "$env:ProgramData\Aegis\Logs\install.log"
 ```
 
+## Verify a download (before installing)
+
+Releases include `SHA256SUMS` (+ optional `SHA256SUMS.sig`) and may be
+Authenticode-signed:
+
+```powershell
+deploy\verify-release.ps1 -Dir .\dist           # checksums + signatures
+# or manually:
+(Get-FileHash .\"Aegis Antivirus_<ver>_x64-setup.exe" -Algorithm SHA256).Hash
+signtool verify /pa /v .\"Aegis Antivirus_<ver>_x64-setup.exe"
+```
+
+See [`RELEASE_ENGINEERING.md`](RELEASE_ENGINEERING.md) and
+[`CODE_SIGNING.md`](CODE_SIGNING.md).
+
 ## Requirements
 
 - Windows 10 / 11 (x64)

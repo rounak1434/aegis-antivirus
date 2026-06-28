@@ -2,6 +2,34 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## Unreleased - Phase 12: Release Engineering & Code Signing — PREPARED
+
+### Added
+- `deploy/sign.ps1` — optional Authenticode signing (timestamped) of
+  app/service exes + MSI + NSIS, via `.pfx`/thumbprint or CI secrets;
+  unsigned dev builds supported (exits 0 when no cert).
+- `deploy/make-release.ps1` — assembles `dist/`: collects artifacts, writes
+  `SHA256SUMS` (+ optional GPG `SHA256SUMS.sig`), runs SBOM, and emits
+  `release-manifest.json` (version, commit, per-artifact hash/size).
+- `deploy/generate-sbom.ps1` — CycloneDX SBOM (cargo-cyclonedx / cyclonedx-npm,
+  with a `cargo metadata` → CycloneDX offline fallback) + license inventory +
+  dependency tree.
+- `deploy/verify-release.ps1` — verify checksums, `SHA256SUMS.sig`, and
+  Authenticode signatures.
+- `release.yml` extended: build installers → optional sign (secret-gated) →
+  checksums + SBOM → upload artifacts → publish **draft** GitHub release with
+  files + auto-generated notes.
+- `RELEASE_ENGINEERING.md`, `CODE_SIGNING.md`, `SBOM.md`.
+
+### Notes
+- No engine/service/installer-behavior changes — release packaging only.
+- Signing is fully optional (secret-gated); checksums + SBOM are always produced.
+- **Validated here:** all `deploy/*.ps1` parse; `release.yml` YAML valid; SBOM
+  generated (CycloneDX 1.5, 726 components), license inventory (727 rows),
+  dependency tree, and `SHA256SUMS` produced by the scripts; unsigned path works.
+- **Not run here:** full `tauri build` of installers + Authenticode signing
+  (need WiX/NSIS toolchain + a code-signing cert). Run on a release host.
+
 ## Unreleased - Phase 11: Windows Installer & Service Deployment — CONFIGURED
 
 ### Added

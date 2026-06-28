@@ -190,6 +190,15 @@ deploy\build-installers.ps1          # build MSI + NSIS + portable ZIP
 Install/upgrade/uninstall, silent install, data layout, and service control:
 see [`INSTALLATION.md`](INSTALLATION.md) and [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
+Releases ship `SHA256SUMS`, a CycloneDX **SBOM**, and (optionally) Authenticode +
+checksum signatures. Build/sign/checksum/SBOM flow:
+[`RELEASE_ENGINEERING.md`](RELEASE_ENGINEERING.md),
+[`CODE_SIGNING.md`](CODE_SIGNING.md), [`SBOM.md`](SBOM.md). Verify a download:
+
+```powershell
+deploy\verify-release.ps1 -Dir .\dist   # checksums + signatures
+```
+
 ## Roadmap
 
 Planned next: UI migration completion, real-time protection (file/process
