@@ -174,12 +174,17 @@ dependencies = [
 
 [[package]]
 name = "aegis-tauri"
-version = "0.1.0-phase1"
+version = "0.1.0"
 dependencies = [
  "aegis-common",
+ "aegis-detect",
  "aegis-ipc",
+ "aegis-quarantine",
+ "aegis-service",
+ "aegis-update",
  "chrono",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
