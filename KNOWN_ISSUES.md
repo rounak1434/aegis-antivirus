@@ -1,5 +1,11 @@
 # Known Issues — v1.0.0-rc1 (public beta)
 
+> **GA decision (Phase 15): REQUIRES RC2** — not for any defect (none found), but
+> the v1.0.0 gate (real-host Windows install/service/GUI matrix) is outstanding.
+> See `FINAL_VALIDATION_REPORT.md`. Code is frozen + GA-quality; v1.0.0 is a
+> tag-only promotion once the on-host matrix passes.
+
+
 Beta-facing, severity-classified. No **Critical** or **High** issues are open
 (those would block the RC). Items below are **Medium/Low** and deferred, with
 workarounds. Full engineering detail in `KNOWN_LIMITATIONS.md`.

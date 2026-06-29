@@ -2,6 +2,28 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## 1.0.0-rc1 - Phase 15: RC Stabilization & v1.0.0 Decision — REQUIRES RC2
+
+### Decision
+- **REQUIRES RC2** (not GA). No defect found — the v1.0.0 gate (real-host
+  Windows 10/11 install · service lifecycle · installer · GUI · idle RAM/CPU ·
+  sleep/resume) was **NOT EXECUTED** (no admin / installer toolchain / VMs / GUI
+  in this environment). GA cannot be certified on unobserved gates.
+
+### Re-validated (automated, reproducible — no code change)
+- `cargo test --workspace --exclude aegis-tauri`: **118/118** (stable across runs).
+- fmt + clippy `-D warnings` clean; `cargo audit` green.
+- Perf snapshot consistent: scan 46.3k files/s @10k; detect peak 27.2 MiB.
+- Bugs: 0 Critical, 0 High; 5 Medium + 4 Low deferred (KNOWN_ISSUES).
+
+### Added
+- `FINAL_VALIDATION_REPORT.md` (executed vs. outstanding gates + decision).
+- `V1_RELEASE_NOTES.md` (prepared draft for the eventual GA tag).
+
+### Next
+- Run the on-host matrix (`RELEASE_CHECKLIST.md` / `COMPATIBILITY_MATRIX.md`).
+  Pass with no new Critical/High → promote `v1.0.0-rc1` to **`v1.0.0`** (tag-only).
+
 ## 1.0.0-rc1 - Phase 14: Real-World Validation & Public Beta — READY
 
 ### Validated (no new features; no architecture change)
