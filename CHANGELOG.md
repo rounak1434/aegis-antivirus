@@ -2,6 +2,30 @@
 
 All notable changes to Aegis Antivirus will be documented in this file.
 
+## 1.0.0-rc1 - Phase 14: Real-World Validation & Public Beta — READY
+
+### Validated (no new features; no architecture change)
+- Functional: full suite 118 Rust + vitest green — every feature (scan modes,
+  detection, quarantine/restore/delete, Windows scanner, RTP + policies, signed
+  updates + rollback, service orchestration) covered.
+- Telemetry audit: **none** — no analytics/tracking/phone-home; the only network
+  code is the signed update downloader.
+- Accessibility: native controls + ARIA (role=switch/aria-checked/aria-pressed/
+  aria-label), single dark theme, min window 1040×680, fluid layout.
+- Bug triage: **0 Critical, 0 High**; Medium/Low deferred + documented.
+
+### Changed
+- Version bumped to **1.0.0-rc1** (tauri.conf.json + package.json).
+
+### Added
+- `BETA_TEST_REPORT.md`, `COMPATIBILITY_MATRIX.md`, `KNOWN_ISSUES.md`,
+  `RELEASE_CHECKLIST.md`.
+
+### Beta notes
+- On-host items (Win10/11 install matrix, sleep/resume, dev-tool coexistence,
+  idle RAM/CPU, EICAR live test, installer/signing build) require target VMs +
+  admin — documented with procedures, to be executed during the public beta.
+
 ## Unreleased - Phase 13: Performance & Security Hardening — VERIFIED
 
 ### Validated (no engine/detection changes — none needed)

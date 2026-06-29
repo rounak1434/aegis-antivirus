@@ -61,7 +61,14 @@ React UI is mid-migration from the design prototype.
 | ⏳ Real-time protection, reporting, updater, packaging | Planned |
 
 **Verified milestones:** Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅ · Phase 4 ✅ ·
-Phase 5 ✅ · Phase 6 ✅
+Phase 5 ✅ · Phase 6 ✅ — backend engines + service, UI integration, CI/CD,
+installer, release engineering, and hardening are complete.
+
+**Status: `v1.0.0-rc1` — public-beta candidate.** Code/automation are verified
+(118 tests, hardened, reproducible); the remaining gate is the on-host Windows
+test matrix. See [`BETA_TEST_REPORT.md`](BETA_TEST_REPORT.md),
+[`COMPATIBILITY_MATRIX.md`](COMPATIBILITY_MATRIX.md),
+[`KNOWN_ISSUES.md`](KNOWN_ISSUES.md), [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
 
 See [`ROADMAP_PUBLIC.md`](ROADMAP_PUBLIC.md), [`ROADMAP.md`](ROADMAP.md), and
 [`TASKS.md`](TASKS.md) for detail.
